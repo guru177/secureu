@@ -138,25 +138,86 @@ public class App {
     // SWING UI HELPERS & CUSTOM COMPONENTS
     // =========================================================================
 
+    // Custom ModernButton that renders reliably on all Windows Look & Feels
+    public static class ModernButton extends JButton {
+        private final Color normalBg;
+        private final Color hoverBg;
+        private final Color textColor;
+        private boolean isHovered = false;
+
+        public ModernButton(String text, Color bg, Color fg) {
+            super(text);
+            this.normalBg = bg;
+            this.hoverBg = bg.equals(Color.WHITE)
+                    ? new Color(241, 245, 249)
+                    : (bg.equals(COLOR_PRIMARY) ? new Color(30, 41, 59) : bg.brighter());
+            this.textColor = fg;
+            setFont(new Font("Segoe UI", Font.BOLD, 13));
+            setForeground(fg);
+            setFocusPainted(false);
+            setContentAreaFilled(false);
+            setBorderPainted(false);
+            setOpaque(false);
+            setCursor(new Cursor(Cursor.HAND_CURSOR));
+            setBorder(new EmptyBorder(10, 20, 10, 20));
+
+            addMouseListener(new java.awt.event.MouseAdapter() {
+                public void mouseEntered(java.awt.event.MouseEvent e) {
+                    isHovered = true;
+                    repaint();
+                }
+                public void mouseExited(java.awt.event.MouseEvent e) {
+                    isHovered = false;
+                    repaint();
+                }
+            });
+        }
+
+        @Override
+        public Dimension getPreferredSize() {
+            Dimension d = super.getPreferredSize();
+            return new Dimension(Math.max(d.width, 110), Math.max(d.height, 38));
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+
+            // Draw button background
+            g2.setColor(isHovered ? hoverBg : normalBg);
+            g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+
+            // Draw border for white / secondary button
+            if (normalBg.equals(Color.WHITE)) {
+                g2.setColor(COLOR_BORDER);
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 8, 8);
+            }
+
+            // Draw button text
+            g2.setColor(textColor);
+            g2.setFont(getFont());
+            FontMetrics fm = g2.getFontMetrics();
+            Rectangle r = fm.getStringBounds(getText(), g2).getBounds();
+            int x = (getWidth() - r.width) / 2;
+            int y = (getHeight() - r.height) / 2 + fm.getAscent();
+            g2.drawString(getText(), x, y);
+
+            g2.dispose();
+        }
+    }
+
     public static JButton modernButton(String text, Color bg, Color fg) {
-        JButton b = new JButton(text);
-        b.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        b.setBackground(bg);
-        b.setForeground(fg);
-        b.setFocusPainted(false);
-        b.setBorder(new CompoundBorder(new LineBorder(bg, 1, true), new EmptyBorder(8, 16, 8, 16)));
-        b.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        return b;
+        return new ModernButton(text, bg, fg);
     }
 
     public static JButton primaryButton(String text) {
-        return modernButton(text, COLOR_PRIMARY, Color.WHITE);
+        return new ModernButton(text, COLOR_PRIMARY, Color.WHITE);
     }
 
     public static JButton secondaryButton(String text) {
-        JButton b = modernButton(text, Color.WHITE, COLOR_PRIMARY);
-        b.setBorder(new CompoundBorder(new LineBorder(COLOR_BORDER, 1, true), new EmptyBorder(7, 14, 7, 14)));
-        return b;
+        return new ModernButton(text, Color.WHITE, COLOR_PRIMARY);
     }
 
     public static JPanel cardPanel(LayoutManager layout) {

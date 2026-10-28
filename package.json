@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "SecureU - Student Safety & Grievance Redressal Portal",
   "scripts": {
-    "start": "node server.js"
+    "start": "node local-server.js"
   },
   "keywords": [
     "grievance",

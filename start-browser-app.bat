@@ -9,6 +9,6 @@ echo.
 start "" http://localhost:3000
 
 :: Start Node server
-node server.js
+node local-server.js
 
 pause

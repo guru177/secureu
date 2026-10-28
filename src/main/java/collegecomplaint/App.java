@@ -5,30 +5,35 @@ import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
 
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
+import javax.swing.border.MatteBorder;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.io.*;
 import java.net.InetSocketAddress;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.sql.*;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
 /**
- * SecureU — Java Backend & Terminal DBMS Redressal System
+ * SecureU — Pure Java Desktop Application & DBMS Redressal System
  * 
- * Architecture:
- * 1. Interactive Java Terminal Console & ASCII Table Reports (System.out)
- * 2. Real MySQL Database Connectivity via Java JDBC (java.sql.*)
- * 3. Pure Java Backend HTTP Server (com.sun.net.httpserver.HttpServer)
- * 4. Real-time Live JDBC Logging in Terminal for all API queries
- * 5. Java Desktop Shell Launcher & Swing UI Fallback
+ * Features:
+ * 1. 100% Pure Java Desktop GUI (Java Swing / AWT: JFrame, JTable, JTabbedPane, CardLayout)
+ * 2. Native Windows Look & Feel with professional modern typography and color palettes
+ * 3. Real MySQL Database Connectivity via Java JDBC (java.sql.*)
+ * 4. Dual-mode Architecture: Pure Java GUI + Simultaneous Terminal Console & Live JDBC Logging
+ * 5. Background REST Server for web/hybrid synchronization
  */
 public class App {
     public static final int PORT = 3000;
@@ -42,6 +47,15 @@ public class App {
 
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
 
+    // Colors for modern Pure Java Swing UI
+    public static final Color COLOR_PRIMARY = new Color(15, 23, 42);      // Slate 900
+    public static final Color COLOR_PRIMARY_HOVER = new Color(30, 41, 59);
+    public static final Color COLOR_ACCENT = new Color(37, 99, 235);      // Blue 600
+    public static final Color COLOR_BG = new Color(248, 250, 252);        // Slate 50
+    public static final Color COLOR_CARD_BG = Color.WHITE;
+    public static final Color COLOR_BORDER = new Color(226, 232, 240);    // Slate 200
+    public static final Color COLOR_TEXT_MUTED = new Color(100, 116, 139);
+
     public static synchronized void log(String tag, String message) {
         String time = LocalTime.now().format(TIME_FMT);
         System.out.println(String.format("[%s] [%-13s] %s", time, tag, message));
@@ -53,77 +67,928 @@ public class App {
 
     public static void main(String[] args) {
         boolean isCliOnly = false;
-        boolean isSwing = false;
 
         for (String arg : args) {
-            if ("--swing".equalsIgnoreCase(arg)) isSwing = true;
             if ("--cli".equalsIgnoreCase(arg) || "--terminal".equalsIgnoreCase(arg) || "--console".equalsIgnoreCase(arg) || "--no-gui".equalsIgnoreCase(arg)) {
                 isCliOnly = true;
             }
         }
 
-        if (isSwing) {
-            System.out.println("[Java] Starting in Swing GUI Mode...");
-            SwingUtilities.invokeLater(() -> new SwingLogin().setVisible(true));
-            return;
-        }
+        // Apply Native System Look & Feel for Swing
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            UIManager.put("Button.font", new Font("Segoe UI", Font.PLAIN, 13));
+            UIManager.put("Label.font", new Font("Segoe UI", Font.PLAIN, 13));
+            UIManager.put("TextField.font", new Font("Segoe UI", Font.PLAIN, 13));
+            UIManager.put("Table.font", new Font("Segoe UI", Font.PLAIN, 12));
+            UIManager.put("TableHeader.font", new Font("Segoe UI", Font.BOLD, 12));
+        } catch (Exception ignored) {}
 
-        // 1. Print Master Banner in Terminal
+        // 1. Terminal Banner
         System.out.println("========================================================================================");
-        System.out.println("            SECURE U — STUDENT SAFETY & GRIEVANCE REDRESSAL SYSTEM                      ");
-        System.out.println("            Course: Java Programming / DBMS Lab (Live Terminal Output)                  ");
-        System.out.println("            Powered by Java (JDK " + System.getProperty("java.version") + ") + MySQL JDBC (java.sql.*)          ");
+        System.out.println("            SECURE U — PURE JAVA DESKTOP APPLICATION & DBMS PORTAL                      ");
+        System.out.println("            Course: Java Programming / DBMS Lab                                        ");
+        System.out.println("            Powered by Java Swing (JFrame) + MySQL JDBC (java.sql.*)                   ");
         System.out.println("========================================================================================");
 
-        // 2. Connect to MySQL & Seed Sample Data
+        // 2. Test MySQL Connection & Seed Sample Data
         try (Connection c = connect()) {
-            System.out.println("[OK] [Java JDBC] Successfully connected to MySQL database: CollegeComplaint");
+            System.out.println("[OK] [Java JDBC] Connected to MySQL database: CollegeComplaint");
             seedSampleData(c);
-            
-            // Print Terminal Summary & Initial ASCII Table
             printDatabaseSummary(c);
-            System.out.println("\n>>> RECENT GRIEVANCES / COMPLAINTS FETCHED VIA JDBC (TERMINAL OUTPUT):");
-            printComplaintsTable(c, null, 10);
-
         } catch (SQLException e) {
             System.err.println("[WARN] [Java JDBC] MySQL notice: " + e.getMessage());
             System.err.println("       (Make sure XAMPP / MySQL service is started on port 3306)");
         }
 
-        // 3. Start Built-in Java HTTP Server
-        HttpServer server = null;
+        // 3. Start Background HTTP Server (for hybrid API / browser access)
+        startBackgroundServer();
+
+        // 4. Launch Pure Java Swing Desktop GUI (Default Desktop Mode)
+        if (!isCliOnly) {
+            log("JAVA SWING", "Launching Pure Java Desktop GUI Window (JFrame)...");
+            SwingUtilities.invokeLater(() -> new LoginWindow().setVisible(true));
+        } else {
+            log("CONSOLE", "Running in pure Terminal Console Mode (GUI skipped).");
+        }
+
+        // 5. Run Interactive Terminal Console in Background
+        new Thread(App::runInteractiveTerminalCli).start();
+    }
+
+    private static void startBackgroundServer() {
         try {
-            server = HttpServer.create(new InetSocketAddress(PORT), 0);
-            
-            // API Handlers (Pure Java JDBC)
+            HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
             server.createContext("/api/status", new StatusHandler());
             server.createContext("/api/login", new LoginHandler());
             server.createContext("/api/complaints", new ComplaintsHandler());
             server.createContext("/api/update", new UpdateHandler());
             server.createContext("/api/db", new DatabaseHandler());
-            
-            // Static File Handler (serves HTML/CSS/JS directly from Java)
             server.createContext("/", new StaticFileHandler());
-            
-            server.setExecutor(null); // default executor
+            server.setExecutor(null);
             server.start();
-
-            log("SERVER", "HTTP & REST API active at http://localhost:" + PORT);
-            log("SERVER", "Frontend directory: " + WEB_DIR.getAbsolutePath());
-
-            if (!isCliOnly) {
-                // Launch Desktop Window in Edge/Chrome
-                launchDesktopWindow("http://localhost:" + PORT);
-            } else {
-                log("CONSOLE", "Running in pure Terminal Console Mode (GUI auto-launch skipped).");
-            }
-
+            log("SERVER", "Background HTTP engine active at http://localhost:" + PORT);
         } catch (Exception e) {
-            System.err.println("[ERROR] [Java Server] Could not bind server to port " + PORT + ": " + e.getMessage());
+            // Port may already be in use; purely optional for desktop app
+            log("SERVER NOTICE", "Local server port notice: " + e.getMessage());
+        }
+    }
+
+    // =========================================================================
+    // SWING UI HELPERS & CUSTOM COMPONENTS
+    // =========================================================================
+
+    public static JButton modernButton(String text, Color bg, Color fg) {
+        JButton b = new JButton(text);
+        b.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        b.setBackground(bg);
+        b.setForeground(fg);
+        b.setFocusPainted(false);
+        b.setBorder(new CompoundBorder(new LineBorder(bg, 1, true), new EmptyBorder(8, 16, 8, 16)));
+        b.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return b;
+    }
+
+    public static JButton primaryButton(String text) {
+        return modernButton(text, COLOR_PRIMARY, Color.WHITE);
+    }
+
+    public static JButton secondaryButton(String text) {
+        JButton b = modernButton(text, Color.WHITE, COLOR_PRIMARY);
+        b.setBorder(new CompoundBorder(new LineBorder(COLOR_BORDER, 1, true), new EmptyBorder(7, 14, 7, 14)));
+        return b;
+    }
+
+    public static JPanel cardPanel(LayoutManager layout) {
+        JPanel p = new JPanel(layout);
+        p.setBackground(COLOR_CARD_BG);
+        p.setBorder(new CompoundBorder(
+                new LineBorder(COLOR_BORDER, 1, true),
+                new EmptyBorder(16, 18, 16, 18)
+        ));
+        return p;
+    }
+
+    public static void styleTable(JTable table) {
+        table.setRowHeight(32);
+        table.setGridColor(COLOR_BORDER);
+        table.setShowVerticalLines(false);
+        table.setShowHorizontalLines(true);
+        table.setSelectionBackground(new Color(238, 242, 255));
+        table.setSelectionForeground(COLOR_PRIMARY);
+
+        JTableHeader header = table.getTableHeader();
+        header.setBackground(new Color(241, 245, 249));
+        header.setForeground(COLOR_PRIMARY);
+        header.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        header.setBorder(new MatteBorder(0, 0, 1, 0, COLOR_BORDER));
+        header.setPreferredSize(new Dimension(header.getWidth(), 36));
+
+        // Center-align ID column
+        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
+        center.setHorizontalAlignment(JLabel.CENTER);
+        if (table.getColumnCount() > 0) {
+            table.getColumnModel().getColumn(0).setCellRenderer(center);
         }
 
-        // 4. Start Interactive Terminal CLI Loop
-        runInteractiveTerminalCli();
+        // Custom Status Badge Renderer
+        StatusBadgeRenderer badgeRenderer = new StatusBadgeRenderer();
+        for (int i = 0; i < table.getColumnCount(); i++) {
+            if ("status".equalsIgnoreCase(table.getColumnName(i))) {
+                table.getColumnModel().getColumn(i).setCellRenderer(badgeRenderer);
+            }
+        }
+    }
+
+    static class StatusBadgeRenderer extends DefaultTableCellRenderer {
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
+            setHorizontalAlignment(JLabel.CENTER);
+            setFont(new Font("Segoe UI", Font.BOLD, 12));
+
+            String status = value == null ? "" : value.toString();
+            if ("Resolved".equalsIgnoreCase(status)) {
+                setForeground(new Color(21, 128, 61));  // Green 700
+                if (!isSelected) setBackground(new Color(240, 253, 244)); // Green 50
+            } else if ("In Progress".equalsIgnoreCase(status)) {
+                setForeground(new Color(29, 78, 216));  // Blue 700
+                if (!isSelected) setBackground(new Color(239, 246, 255)); // Blue 50
+            } else {
+                setForeground(new Color(180, 83, 9));   // Amber 700
+                if (!isSelected) setBackground(new Color(254, 252, 232)); // Amber 50
+            }
+            return c;
+        }
+    }
+
+    static DefaultTableModel buildTableModel(ResultSet rs) throws SQLException {
+        ResultSetMetaData md = rs.getMetaData();
+        int colCount = md.getColumnCount();
+        String[] colNames = new String[colCount];
+        for (int i = 1; i <= colCount; i++) {
+            colNames[i - 1] = md.getColumnLabel(i);
+        }
+
+        DefaultTableModel model = new DefaultTableModel(colNames, 0) {
+            public boolean isCellEditable(int r, int c) {
+                return false;
+            }
+        };
+
+        while (rs.next()) {
+            Object[] row = new Object[colCount];
+            for (int i = 1; i <= colCount; i++) {
+                row[i - 1] = rs.getObject(i);
+            }
+            model.addRow(row);
+        }
+        return model;
+    }
+
+    // =========================================================================
+    // 1. PURE JAVA LOGIN WINDOW (JFrame)
+    // =========================================================================
+
+    public static class LoginWindow extends JFrame {
+        private final JComboBox<String> roleCombo = new JComboBox<>(new String[]{"Student", "Administrator / Warden"});
+        private final JTextField emailField = new JTextField("abhinav@example.com", 22);
+        private final JPasswordField passwordField = new JPasswordField("student@123", 22);
+        private final JLabel statusLabel = new JLabel(" ");
+
+        public LoginWindow() {
+            setTitle("SecureU — Pure Java Desktop Portal");
+            setDefaultCloseOperation(EXIT_ON_CLOSE);
+            setSize(540, 520);
+            setLocationRelativeTo(null);
+            setResizable(false);
+            getContentPane().setBackground(COLOR_BG);
+
+            JPanel root = new JPanel(new BorderLayout(0, 16));
+            root.setBackground(COLOR_BG);
+            root.setBorder(new EmptyBorder(28, 36, 28, 36));
+
+            // Header Banner
+            JPanel header = new JPanel(new GridLayout(2, 1, 4, 4));
+            header.setBackground(COLOR_BG);
+
+            JLabel title = new JLabel("SecureU Portal");
+            title.setFont(new Font("Segoe UI", Font.BOLD, 24));
+            title.setForeground(COLOR_PRIMARY);
+
+            JLabel subtitle = new JLabel("Pure Java Desktop Client (Swing + MySQL JDBC)");
+            subtitle.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+            subtitle.setForeground(COLOR_TEXT_MUTED);
+
+            header.add(title);
+            header.add(subtitle);
+            root.add(header, BorderLayout.NORTH);
+
+            // Login Card Form
+            JPanel card = cardPanel(new GridBagLayout());
+            GridBagConstraints g = new GridBagConstraints();
+            g.insets = new Insets(6, 6, 6, 6);
+            g.fill = GridBagConstraints.HORIZONTAL;
+            g.weightx = 1.0;
+
+            // Role
+            g.gridx = 0; g.gridy = 0;
+            JLabel lblRole = new JLabel("Login Role");
+            lblRole.setFont(new Font("Segoe UI", Font.BOLD, 12));
+            card.add(lblRole, g);
+
+            g.gridy = 1;
+            roleCombo.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+            card.add(roleCombo, g);
+
+            // Email
+            g.gridy = 2;
+            JLabel lblEmail = new JLabel("Institutional Email");
+            lblEmail.setFont(new Font("Segoe UI", Font.BOLD, 12));
+            card.add(lblEmail, g);
+
+            g.gridy = 3;
+            emailField.setPreferredSize(new Dimension(100, 34));
+            card.add(emailField, g);
+
+            // Password
+            g.gridy = 4;
+            JLabel lblPass = new JLabel("Password");
+            lblPass.setFont(new Font("Segoe UI", Font.BOLD, 12));
+            card.add(lblPass, g);
+
+            g.gridy = 5;
+            passwordField.setPreferredSize(new Dimension(100, 34));
+            card.add(passwordField, g);
+
+            // Submit Button
+            g.gridy = 6;
+            g.insets = new Insets(12, 6, 4, 6);
+            JButton btnLogin = primaryButton("Sign In to Portal");
+            card.add(btnLogin, g);
+
+            // Status Notice
+            g.gridy = 7;
+            g.insets = new Insets(2, 6, 6, 6);
+            statusLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            statusLabel.setHorizontalAlignment(JLabel.CENTER);
+            card.add(statusLabel, g);
+
+            root.add(card, BorderLayout.CENTER);
+
+            // Quick-fill Demo Buttons at Bottom
+            JPanel footer = new JPanel(new GridLayout(2, 1, 6, 6));
+            footer.setBackground(COLOR_BG);
+
+            JLabel quickLabel = new JLabel("Quick Fill for Teacher / Viva Evaluation:");
+            quickLabel.setFont(new Font("Segoe UI", Font.BOLD, 11));
+            quickLabel.setForeground(COLOR_TEXT_MUTED);
+
+            JPanel quickRow = new JPanel(new GridLayout(1, 2, 8, 0));
+            quickRow.setBackground(COLOR_BG);
+
+            JButton btnDemoStudent = secondaryButton("Student (Abhinav)");
+            JButton btnDemoAdmin = secondaryButton("Admin (Dr. Raman)");
+
+            btnDemoStudent.addActionListener(e -> {
+                roleCombo.setSelectedIndex(0);
+                emailField.setText("abhinav@example.com");
+                passwordField.setText("student@123");
+            });
+
+            btnDemoAdmin.addActionListener(e -> {
+                roleCombo.setSelectedIndex(1);
+                emailField.setText("warden@example.com");
+                passwordField.setText("admin@123");
+            });
+
+            quickRow.add(btnDemoStudent);
+            quickRow.add(btnDemoAdmin);
+            footer.add(quickLabel);
+            footer.add(quickRow);
+
+            root.add(footer, BorderLayout.SOUTH);
+            add(root);
+
+            getRootPane().setDefaultButton(btnLogin);
+            btnLogin.addActionListener(e -> performLogin());
+
+            roleCombo.addActionListener(e -> {
+                if (roleCombo.getSelectedIndex() == 1) {
+                    if ("abhinav@example.com".equals(emailField.getText())) {
+                        emailField.setText("warden@example.com");
+                        passwordField.setText("admin@123");
+                    }
+                } else {
+                    if ("warden@example.com".equals(emailField.getText())) {
+                        emailField.setText("abhinav@example.com");
+                        passwordField.setText("student@123");
+                    }
+                }
+            });
+        }
+
+        private void performLogin() {
+            String email = emailField.getText().trim();
+            String pass = new String(passwordField.getPassword());
+            boolean isAdmin = roleCombo.getSelectedIndex() == 1;
+
+            if (email.isEmpty() || pass.isEmpty()) {
+                statusLabel.setText("Please enter both email and password.");
+                statusLabel.setForeground(Color.RED);
+                return;
+            }
+
+            statusLabel.setText("Authenticating with MySQL via JDBC...");
+            statusLabel.setForeground(COLOR_PRIMARY);
+
+            String sql = isAdmin
+                    ? "SELECT admin_id, name, role FROM admin WHERE email=? AND password=?"
+                    : "SELECT student_id, name, department FROM students WHERE email=? AND password=?";
+
+            try (Connection c = connect(); PreparedStatement s = c.prepareStatement(sql)) {
+                s.setString(1, email);
+                s.setString(2, pass);
+                try (ResultSet r = s.executeQuery()) {
+                    if (r.next()) {
+                        int id = r.getInt(1);
+                        String name = r.getString(2);
+                        String detail = r.getString(3);
+
+                        log("JAVA SWING LOGIN", "SUCCESS: " + (isAdmin ? "Admin " : "Student ") + name + " logged into Pure Java GUI.");
+
+                        if (isAdmin) {
+                            new AdminDashboard(id, name, detail).setVisible(true);
+                        } else {
+                            new StudentDashboard(id, name, detail).setVisible(true);
+                        }
+                        dispose();
+                    } else {
+                        statusLabel.setText("Invalid credentials. Please verify email and password.");
+                        statusLabel.setForeground(Color.RED);
+                    }
+                }
+            } catch (SQLException ex) {
+                statusLabel.setText("MySQL Database Error: " + ex.getMessage());
+                statusLabel.setForeground(Color.RED);
+                log("JDBC LOGIN ERROR", ex.getMessage());
+            }
+        }
+    }
+
+    // =========================================================================
+    // 2. PURE JAVA STUDENT DASHBOARD (JFrame)
+    // =========================================================================
+
+    public static class StudentDashboard extends JFrame {
+        private final int studentId;
+        private final String studentName;
+        private final String department;
+
+        private final JComboBox<String> categoryCombo = new JComboBox<>(new String[]{
+                "Academic", "Hostel", "Food", "Physical Harassment", "Verbal Harassment", "Other"
+        });
+        private final JTextArea descArea = new JTextArea(5, 30);
+        private final JTextField evidenceField = new JTextField(25);
+
+        private final JTextField trackIdField = new JTextField(8);
+        private final JLabel trackResultLabel = new JLabel("Enter a Complaint ID and click 'Search Grievance'.");
+
+        private final JTable historyTable = new JTable();
+
+        public StudentDashboard(int id, String name, String dept) {
+            this.studentId = id;
+            this.studentName = name;
+            this.department = dept;
+
+            setTitle("SecureU — Student Grievance Portal");
+            setDefaultCloseOperation(EXIT_ON_CLOSE);
+            setSize(980, 680);
+            setLocationRelativeTo(null);
+            getContentPane().setBackground(COLOR_BG);
+
+            JPanel root = new JPanel(new BorderLayout(0, 16));
+            root.setBackground(COLOR_BG);
+            root.setBorder(new EmptyBorder(20, 24, 20, 24));
+
+            // Top Header Bar
+            JPanel topBar = new JPanel(new BorderLayout());
+            topBar.setBackground(COLOR_BG);
+
+            JPanel userDetails = new JPanel(new GridLayout(2, 1, 2, 2));
+            userDetails.setBackground(COLOR_BG);
+
+            JLabel welcome = new JLabel("Welcome, " + studentName);
+            welcome.setFont(new Font("Segoe UI", Font.BOLD, 22));
+            welcome.setForeground(COLOR_PRIMARY);
+
+            JLabel deptLabel = new JLabel("Department: " + department + " | Student ID #" + studentId + " | Pure Java Swing GUI");
+            deptLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+            deptLabel.setForeground(COLOR_TEXT_MUTED);
+
+            userDetails.add(welcome);
+            userDetails.add(deptLabel);
+            topBar.add(userDetails, BorderLayout.WEST);
+
+            JButton btnLogout = secondaryButton("Logout");
+            btnLogout.addActionListener(e -> {
+                new LoginWindow().setVisible(true);
+                dispose();
+            });
+            topBar.add(btnLogout, BorderLayout.EAST);
+            root.add(topBar, BorderLayout.NORTH);
+
+            // Tabbed Pane for Student Features
+            JTabbedPane tabs = new JTabbedPane();
+            tabs.setFont(new Font("Segoe UI", Font.BOLD, 13));
+
+            tabs.addTab("  File New Grievance  ", createFileTab());
+            tabs.addTab("  Track Status  ", createTrackTab());
+            tabs.addTab("  My Grievance History  ", createHistoryTab());
+
+            root.add(tabs, BorderLayout.CENTER);
+            add(root);
+
+            loadHistory();
+        }
+
+        private JPanel createFileTab() {
+            JPanel card = cardPanel(new GridBagLayout());
+            GridBagConstraints g = new GridBagConstraints();
+            g.insets = new Insets(8, 8, 8, 8);
+            g.fill = GridBagConstraints.HORIZONTAL;
+            g.weightx = 1.0;
+
+            g.gridx = 0; g.gridy = 0;
+            JLabel lblCat = new JLabel("Grievance Category");
+            lblCat.setFont(new Font("Segoe UI", Font.BOLD, 13));
+            card.add(lblCat, g);
+
+            g.gridy = 1;
+            categoryCombo.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+            card.add(categoryCombo, g);
+
+            g.gridy = 2;
+            JLabel lblDesc = new JLabel("Detailed Description of the Issue");
+            lblDesc.setFont(new Font("Segoe UI", Font.BOLD, 13));
+            card.add(lblDesc, g);
+
+            g.gridy = 3;
+            descArea.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+            descArea.setLineWrap(true);
+            descArea.setWrapStyleWord(true);
+            JScrollPane scrollDesc = new JScrollPane(descArea);
+            scrollDesc.setPreferredSize(new Dimension(100, 110));
+            card.add(scrollDesc, g);
+
+            g.gridy = 4;
+            JLabel lblEv = new JLabel("Evidence Filename or Reference (Optional)");
+            lblEv.setFont(new Font("Segoe UI", Font.BOLD, 13));
+            card.add(lblEv, g);
+
+            g.gridy = 5;
+            evidenceField.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+            evidenceField.setPreferredSize(new Dimension(100, 32));
+            card.add(evidenceField, g);
+
+            g.gridy = 6;
+            g.insets = new Insets(16, 8, 8, 8);
+            JButton btnSubmit = primaryButton("Submit Grievance to Administration");
+            card.add(btnSubmit, g);
+
+            btnSubmit.addActionListener(e -> submitComplaint());
+
+            JPanel wrap = new JPanel(new BorderLayout());
+            wrap.setBackground(COLOR_BG);
+            wrap.setBorder(new EmptyBorder(12, 12, 12, 12));
+            wrap.add(card, BorderLayout.NORTH);
+            return wrap;
+        }
+
+        private JPanel createTrackTab() {
+            JPanel card = cardPanel(new BorderLayout(12, 16));
+
+            JPanel searchRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 10));
+            searchRow.setBackground(COLOR_CARD_BG);
+
+            JLabel lblId = new JLabel("Enter Complaint ID:");
+            lblId.setFont(new Font("Segoe UI", Font.BOLD, 13));
+            searchRow.add(lblId);
+
+            trackIdField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+            trackIdField.setPreferredSize(new Dimension(120, 32));
+            searchRow.add(trackIdField);
+
+            JButton btnSearch = primaryButton("Search Grievance");
+            searchRow.add(btnSearch);
+
+            card.add(searchRow, BorderLayout.NORTH);
+
+            JPanel resultCard = new JPanel(new BorderLayout());
+            resultCard.setBackground(new Color(248, 250, 252));
+            resultCard.setBorder(new CompoundBorder(new LineBorder(COLOR_BORDER, 1, true), new EmptyBorder(20, 20, 20, 20)));
+
+            trackResultLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+            trackResultLabel.setForeground(COLOR_PRIMARY);
+            resultCard.add(trackResultLabel, BorderLayout.CENTER);
+
+            card.add(resultCard, BorderLayout.CENTER);
+
+            btnSearch.addActionListener(e -> trackComplaint());
+
+            JPanel wrap = new JPanel(new BorderLayout());
+            wrap.setBackground(COLOR_BG);
+            wrap.setBorder(new EmptyBorder(12, 12, 12, 12));
+            wrap.add(card, BorderLayout.NORTH);
+            return wrap;
+        }
+
+        private JPanel createHistoryTab() {
+            JPanel card = cardPanel(new BorderLayout(0, 12));
+
+            JPanel top = new JPanel(new BorderLayout());
+            top.setBackground(COLOR_CARD_BG);
+
+            JLabel title = new JLabel("All Grievances Submitted By You");
+            title.setFont(new Font("Segoe UI", Font.BOLD, 14));
+            top.add(title, BorderLayout.WEST);
+
+            JButton btnRefresh = secondaryButton("Refresh Table");
+            btnRefresh.addActionListener(e -> loadHistory());
+            top.add(btnRefresh, BorderLayout.EAST);
+
+            card.add(top, BorderLayout.NORTH);
+
+            styleTable(historyTable);
+            card.add(new JScrollPane(historyTable), BorderLayout.CENTER);
+
+            JPanel wrap = new JPanel(new BorderLayout());
+            wrap.setBackground(COLOR_BG);
+            wrap.setBorder(new EmptyBorder(12, 12, 12, 12));
+            wrap.add(card, BorderLayout.CENTER);
+            return wrap;
+        }
+
+        private void submitComplaint() {
+            String desc = descArea.getText().trim();
+            String cat = (String) categoryCombo.getSelectedItem();
+            String ev = evidenceField.getText().trim();
+
+            if (desc.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please describe the grievance before submitting.", "Validation", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            String sql = "INSERT INTO complaints (student_id, category, description, evidence, status, date_filed) VALUES (?, ?, ?, ?, 'Pending', CURRENT_DATE())";
+            try (Connection c = connect(); PreparedStatement s = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                s.setInt(1, studentId);
+                s.setString(2, cat);
+                s.setString(3, desc);
+                s.setString(4, ev.isEmpty() ? null : ev);
+                s.executeUpdate();
+
+                int newId = -1;
+                try (ResultSet k = s.getGeneratedKeys()) {
+                    if (k.next()) newId = k.getInt(1);
+                }
+
+                log("JAVA SWING INSERT", "Grievance #" + newId + " filed via Java Swing GUI for Student ID " + studentId);
+
+                JOptionPane.showMessageDialog(this,
+                        "Your grievance has been registered successfully in MySQL!\nAssigned Complaint ID: #" + newId,
+                        "Submission Confirmed", JOptionPane.INFORMATION_MESSAGE);
+
+                descArea.setText("");
+                evidenceField.setText("");
+                trackIdField.setText(String.valueOf(newId));
+                loadHistory();
+
+            } catch (SQLException ex) {
+                log("JDBC ERROR", ex.getMessage());
+                JOptionPane.showMessageDialog(this, "Database submission error:\n" + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
+        private void trackComplaint() {
+            String text = trackIdField.getText().trim();
+            if (text.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please enter a numeric Complaint ID.", "Search", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            try {
+                int cid = Integer.parseInt(text);
+                String sql = "SELECT complaint_id, category, status, date_filed, remarks, description FROM complaints WHERE complaint_id=? AND student_id=?";
+                try (Connection c = connect(); PreparedStatement s = c.prepareStatement(sql)) {
+                    s.setInt(1, cid);
+                    s.setInt(2, studentId);
+                    try (ResultSet r = s.executeQuery()) {
+                        if (r.next()) {
+                            String remarks = r.getString("remarks");
+                            if (remarks == null || remarks.isEmpty()) remarks = "Under review by assigned grievance committee.";
+
+                            String html = String.format("<html><body style='width: 450px; font-family: Segoe UI;'>" +
+                                            "<h3 style='margin: 0; color: #0f172a;'>Grievance #%d — %s</h3>" +
+                                            "<p style='color: #64748b; margin: 4px 0 12px 0;'>Filed on %s | Status: <b>%s</b></p>" +
+                                            "<p><b>Description:</b> %s</p>" +
+                                            "<p style='background: #e2e8f0; padding: 10px; border-radius: 4px;'><b>Administrative Remarks:</b><br>%s</p>" +
+                                            "</body></html>",
+                                    r.getInt("complaint_id"),
+                                    r.getString("category"),
+                                    r.getDate("date_filed"),
+                                    r.getString("status"),
+                                    r.getString("description"),
+                                    remarks);
+
+                            trackResultLabel.setText(html);
+                        } else {
+                            trackResultLabel.setText("<html><span style='color: #dc2626;'>Complaint #" + cid + " not found under your student account.</span></html>");
+                        }
+                    }
+                }
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Complaint ID must be a number.", "Invalid Input", JOptionPane.ERROR_MESSAGE);
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(this, "Database query error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
+        private void loadHistory() {
+            String sql = "SELECT complaint_id AS ID, category AS Category, status AS Status, date_filed AS Date, description AS Description, remarks AS Remarks " +
+                         "FROM complaints WHERE student_id=? ORDER BY complaint_id DESC";
+            try (Connection c = connect(); PreparedStatement s = c.prepareStatement(sql)) {
+                s.setInt(1, studentId);
+                try (ResultSet r = s.executeQuery()) {
+                    historyTable.setModel(buildTableModel(r));
+                    styleTable(historyTable);
+                }
+            } catch (SQLException ex) {
+                log("JDBC LOAD ERROR", ex.getMessage());
+            }
+        }
+    }
+
+    // =========================================================================
+    // 3. PURE JAVA ADMINISTRATOR DASHBOARD (JFrame)
+    // =========================================================================
+
+    public static class AdminDashboard extends JFrame {
+        private final int adminId;
+        private final String adminName;
+        private final String adminRole;
+
+        private final JTable complaintsTable = new JTable();
+        private final JTextField filterField = new JTextField(14);
+        private final JComboBox<String> statusFilterCombo = new JComboBox<>(new String[]{"All Statuses", "Pending", "In Progress", "Resolved"});
+
+        // Bottom Update Controls
+        private final JTextField selectedIdField = new JTextField(6);
+        private final JComboBox<String> newStatusCombo = new JComboBox<>(new String[]{"Pending", "In Progress", "Resolved"});
+        private final JTextField remarksField = new JTextField(28);
+
+        // Stats Labels
+        private final JLabel lblStatTotal = new JLabel("0");
+        private final JLabel lblStatPending = new JLabel("0");
+        private final JLabel lblStatProgress = new JLabel("0");
+        private final JLabel lblStatResolved = new JLabel("0");
+
+        public AdminDashboard(int id, String name, String role) {
+            this.adminId = id;
+            this.adminName = name;
+            this.adminRole = role;
+
+            setTitle("SecureU — Administrator Grievance Redressal Portal");
+            setDefaultCloseOperation(EXIT_ON_CLOSE);
+            setSize(1140, 720);
+            setLocationRelativeTo(null);
+            getContentPane().setBackground(COLOR_BG);
+
+            JPanel root = new JPanel(new BorderLayout(0, 14));
+            root.setBackground(COLOR_BG);
+            root.setBorder(new EmptyBorder(18, 22, 18, 22));
+
+            // Header Row
+            JPanel topBar = new JPanel(new BorderLayout());
+            topBar.setBackground(COLOR_BG);
+
+            JPanel adminDetails = new JPanel(new GridLayout(2, 1, 2, 2));
+            adminDetails.setBackground(COLOR_BG);
+
+            JLabel welcome = new JLabel("SecureU Administration Portal");
+            welcome.setFont(new Font("Segoe UI", Font.BOLD, 22));
+            welcome.setForeground(COLOR_PRIMARY);
+
+            JLabel adminSubtitle = new JLabel("Logged in as " + adminName + " (" + adminRole + ") | Pure Java Swing GUI");
+            adminSubtitle.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+            adminSubtitle.setForeground(COLOR_TEXT_MUTED);
+
+            adminDetails.add(welcome);
+            adminDetails.add(adminSubtitle);
+            topBar.add(adminDetails, BorderLayout.WEST);
+
+            JButton btnLogout = secondaryButton("Logout");
+            btnLogout.addActionListener(e -> {
+                new LoginWindow().setVisible(true);
+                dispose();
+            });
+            topBar.add(btnLogout, BorderLayout.EAST);
+            root.add(topBar, BorderLayout.NORTH);
+
+            // Center Panel: KPI Metrics + Table
+            JPanel center = new JPanel(new BorderLayout(0, 12));
+            center.setBackground(COLOR_BG);
+
+            // 4 KPI Cards
+            JPanel kpiRow = new JPanel(new GridLayout(1, 4, 12, 0));
+            kpiRow.setBackground(COLOR_BG);
+            kpiRow.add(createKpiCard("TOTAL GRIEVANCES", lblStatTotal, COLOR_PRIMARY));
+            kpiRow.add(createKpiCard("PENDING REVIEW", lblStatPending, new Color(217, 119, 6)));
+            kpiRow.add(createKpiCard("IN PROGRESS", lblStatProgress, new Color(37, 99, 235)));
+            kpiRow.add(createKpiCard("RESOLVED CASES", lblStatResolved, new Color(22, 163, 74)));
+            center.add(kpiRow, BorderLayout.NORTH);
+
+            // Table Card
+            JPanel tableCard = cardPanel(new BorderLayout(0, 10));
+
+            // Filter Bar
+            JPanel filterBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 6));
+            filterBar.setBackground(COLOR_CARD_BG);
+
+            filterBar.add(new JLabel("Filter by Status:"));
+            statusFilterCombo.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+            filterBar.add(statusFilterCombo);
+
+            filterBar.add(Box.createHorizontalStrut(10));
+            filterBar.add(new JLabel("Search Keyword:"));
+            filterField.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+            filterBar.add(filterField);
+
+            JButton btnFilter = secondaryButton("Apply Filter");
+            JButton btnReset = secondaryButton("Reset");
+            filterBar.add(btnFilter);
+            filterBar.add(btnReset);
+
+            tableCard.add(filterBar, BorderLayout.NORTH);
+
+            styleTable(complaintsTable);
+            complaintsTable.setAutoCreateRowSorter(true);
+            tableCard.add(new JScrollPane(complaintsTable), BorderLayout.CENTER);
+
+            center.add(tableCard, BorderLayout.CENTER);
+            root.add(center, BorderLayout.CENTER);
+
+            // Bottom Update Form Card
+            JPanel bottomCard = cardPanel(new FlowLayout(FlowLayout.LEFT, 12, 10));
+
+            JLabel lblUpdateTitle = new JLabel("Update Complaint Status:");
+            lblUpdateTitle.setFont(new Font("Segoe UI", Font.BOLD, 13));
+            bottomCard.add(lblUpdateTitle);
+
+            bottomCard.add(new JLabel("ID:"));
+            selectedIdField.setFont(new Font("Segoe UI", Font.BOLD, 13));
+            selectedIdField.setEditable(false);
+            bottomCard.add(selectedIdField);
+
+            bottomCard.add(new JLabel("Status:"));
+            newStatusCombo.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+            bottomCard.add(newStatusCombo);
+
+            bottomCard.add(new JLabel("Administrative Remarks:"));
+            remarksField.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+            bottomCard.add(remarksField);
+
+            JButton btnSave = primaryButton("Save Update");
+            bottomCard.add(btnSave);
+
+            root.add(bottomCard, BorderLayout.SOUTH);
+            add(root);
+
+            // Listeners
+            btnFilter.addActionListener(e -> loadComplaints());
+            btnReset.addActionListener(e -> {
+                statusFilterCombo.setSelectedIndex(0);
+                filterField.setText("");
+                loadComplaints();
+            });
+
+            btnSave.addActionListener(e -> saveUpdate());
+
+            // Click table row to populate update fields
+            complaintsTable.getSelectionModel().addListSelectionListener(e -> {
+                int selectedRow = complaintsTable.getSelectedRow();
+                if (selectedRow >= 0) {
+                    int modelRow = complaintsTable.convertRowIndexToModel(selectedRow);
+                    Object idVal = complaintsTable.getModel().getValueAt(modelRow, 0);
+                    Object statusVal = complaintsTable.getModel().getValueAt(modelRow, 6);
+                    Object remarksVal = complaintsTable.getModel().getValueAt(modelRow, 8);
+
+                    if (idVal != null) selectedIdField.setText(idVal.toString());
+                    if (statusVal != null) newStatusCombo.setSelectedItem(statusVal.toString());
+                    if (remarksVal != null) remarksField.setText(remarksVal.toString());
+                    else remarksField.setText("");
+                }
+            });
+
+            loadComplaints();
+        }
+
+        private JPanel createKpiCard(String label, JLabel valueLabel, Color accent) {
+            JPanel card = cardPanel(new GridLayout(2, 1, 2, 2));
+            card.setBorder(new CompoundBorder(
+                    new MatteBorder(0, 4, 0, 0, accent),
+                    new CompoundBorder(new LineBorder(COLOR_BORDER, 1, true), new EmptyBorder(10, 14, 10, 14))
+            ));
+
+            JLabel title = new JLabel(label);
+            title.setFont(new Font("Segoe UI", Font.BOLD, 10));
+            title.setForeground(COLOR_TEXT_MUTED);
+
+            valueLabel.setFont(new Font("Segoe UI", Font.BOLD, 22));
+            valueLabel.setForeground(accent);
+
+            card.add(title);
+            card.add(valueLabel);
+            return card;
+        }
+
+        private void loadComplaints() {
+            String selectedStatus = (String) statusFilterCombo.getSelectedItem();
+            String keyword = filterField.getText().trim();
+
+            StringBuilder sql = new StringBuilder(
+                    "SELECT c.complaint_id AS ID, c.student_id AS `Student ID`, COALESCE(s.name, 'Unknown') AS `Student Name`, " +
+                    "COALESCE(s.department, 'N/A') AS Dept, c.category AS Category, c.description AS Description, " +
+                    "c.status AS Status, c.date_filed AS Date, c.remarks AS Remarks " +
+                    "FROM complaints c LEFT JOIN students s ON c.student_id=s.student_id WHERE 1=1 "
+            );
+
+            if (selectedStatus != null && !"All Statuses".equals(selectedStatus)) {
+                sql.append("AND c.status = '").append(selectedStatus.replace("'", "''")).append("' ");
+            }
+            if (!keyword.isEmpty()) {
+                String safe = keyword.replace("'", "''");
+                sql.append("AND (c.description LIKE '%").append(safe).append("%' OR s.name LIKE '%").append(safe).append("%') ");
+            }
+            sql.append("ORDER BY c.complaint_id DESC");
+
+            try (Connection c = connect(); Statement st = c.createStatement(); ResultSet r = st.executeQuery(sql.toString())) {
+                complaintsTable.setModel(buildTableModel(r));
+                styleTable(complaintsTable);
+                refreshKpiCounts(c);
+            } catch (SQLException ex) {
+                log("ADMIN LOAD ERROR", ex.getMessage());
+            }
+        }
+
+        private void refreshKpiCounts(Connection c) {
+            try (Statement st = c.createStatement()) {
+                try (ResultSet r = st.executeQuery("SELECT COUNT(*) FROM complaints")) {
+                    if (r.next()) lblStatTotal.setText(String.valueOf(r.getInt(1)));
+                }
+                try (ResultSet r = st.executeQuery("SELECT COUNT(*) FROM complaints WHERE status='Pending'")) {
+                    if (r.next()) lblStatPending.setText(String.valueOf(r.getInt(1)));
+                }
+                try (ResultSet r = st.executeQuery("SELECT COUNT(*) FROM complaints WHERE status='In Progress'")) {
+                    if (r.next()) lblStatProgress.setText(String.valueOf(r.getInt(1)));
+                }
+                try (ResultSet r = st.executeQuery("SELECT COUNT(*) FROM complaints WHERE status='Resolved'")) {
+                    if (r.next()) lblStatResolved.setText(String.valueOf(r.getInt(1)));
+                }
+            } catch (SQLException ignored) {}
+        }
+
+        private void saveUpdate() {
+            String idStr = selectedIdField.getText().trim();
+            if (idStr.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Select a complaint row from the table first.", "Selection Required", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            try {
+                int cid = Integer.parseInt(idStr);
+                String status = (String) newStatusCombo.getSelectedItem();
+                String remarks = remarksField.getText().trim();
+
+                String sql = "UPDATE complaints SET status=?, remarks=? WHERE complaint_id=?";
+                try (Connection c = connect(); PreparedStatement s = c.prepareStatement(sql)) {
+                    s.setString(1, status);
+                    s.setString(2, remarks);
+                    s.setInt(3, cid);
+                    int updated = s.executeUpdate();
+
+                    if (updated > 0) {
+                        log("JAVA SWING UPDATE", "Complaint #" + cid + " updated to '" + status + "' with remarks: '" + remarks + "'");
+                        JOptionPane.showMessageDialog(this, "Complaint #" + cid + " status updated successfully in MySQL!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                        loadComplaints();
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Complaint #" + cid + " not found in database.", "Notice", JOptionPane.WARNING_MESSAGE);
+                    }
+                }
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Invalid Complaint ID.", "Error", JOptionPane.ERROR_MESSAGE);
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(this, "Database update error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 
     // =========================================================================
@@ -240,11 +1105,8 @@ public class App {
     // =========================================================================
 
     private static void runInteractiveTerminalCli() {
-        printMenuHelp();
-
         Scanner scanner = new Scanner(System.in);
         while (true) {
-            System.out.print("\n[SecureU Console] Enter command (1-8, menu, exit) > ");
             String line;
             try {
                 if (!scanner.hasNextLine()) break;
@@ -356,8 +1218,8 @@ public class App {
                         break;
 
                     case "7":
-                        launchDesktopWindow("http://localhost:" + PORT);
-                        System.out.println("[OK] Opened browser window to http://localhost:" + PORT);
+                        SwingUtilities.invokeLater(() -> new LoginWindow().setVisible(true));
+                        System.out.println("[OK] Opened Pure Java Swing Desktop Window.");
                         break;
 
                     case "8":
@@ -388,55 +1250,21 @@ public class App {
         System.out.println("  [4] Submit New Complaint (Interactive Terminal Input)");
         System.out.println("  [5] Update Complaint Status & Remarks (Interactive Terminal Input)");
         System.out.println("  [6] View Live Database Summary & Metrics");
-        System.out.println("  [7] Open / Re-open Web GUI Browser (http://localhost:" + PORT + ")");
+        System.out.println("  [7] Open Pure Java Swing Desktop Window (JFrame)");
         System.out.println("  [8] Show This Menu Again (or type 'menu')");
         System.out.println("  [0] Exit Application (or type 'exit')");
         System.out.println("========================================================================================");
-        System.out.println("  * Web GUI and REST endpoints are running simultaneously.");
-        System.out.println("  * Any action in browser will be logged LIVE in this terminal below.");
-        System.out.println("========================================================================================");
-    }
-
-    // Launch standalone frameless desktop window
-    public static void launchDesktopWindow(String url) {
-        new Thread(() -> {
-            try {
-                Thread.sleep(800); // Give server time to bind
-                String[] possiblePaths = {
-                    "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
-                    "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
-                    "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-                    "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe"
-                };
-
-                for (String path : possiblePaths) {
-                    File f = new File(path);
-                    if (f.exists()) {
-                        log("DESKTOP SHELL", "Launching Standalone Desktop Window: " + f.getName());
-                        new ProcessBuilder(path, "--app=" + url, "--start-maximized").start();
-                        return;
-                    }
-                }
-
-                // Fallback to default browser
-                if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-                    Desktop.getDesktop().browse(new URI(url));
-                }
-            } catch (Exception e) {
-                System.err.println("Could not launch desktop window automatically: " + e.getMessage());
-            }
-        }).start();
     }
 
     // =========================================================================
-    // JAVA REST API HANDLERS (JDBC with Live Terminal Logging)
+    // BACKGROUND REST API HANDLERS (for hybrid or web requests)
     // =========================================================================
 
     static class StatusHandler implements HttpHandler {
         public void handle(HttpExchange ex) throws IOException {
             boolean dbOk = false;
             try (Connection c = connect()) { dbOk = true; } catch (Exception ignored) {}
-            String json = "{\"status\":\"online\",\"engine\":\"Java " + System.getProperty("java.version") + "\",\"db_connected\":" + dbOk + "}";
+            String json = "{\"status\":\"online\",\"engine\":\"Java " + System.getProperty("java.version") + " Pure Swing\",\"db_connected\":" + dbOk + "}";
             sendJsonResponse(ex, 200, json);
         }
     }
@@ -477,10 +1305,8 @@ public class App {
                         return;
                     }
                 }
-                log("JDBC LOGIN", "FAILED: Invalid credentials for " + email);
                 sendJsonResponse(ex, 401, "{\"success\":false,\"message\":\"Invalid email or password.\"}");
             } catch (SQLException e) {
-                log("JDBC LOGIN ERROR", e.getMessage());
                 sendJsonResponse(ex, 500, "{\"success\":false,\"error\":\"" + escape(e.getMessage()) + "\"}");
             }
         }
@@ -491,7 +1317,6 @@ public class App {
             String method = ex.getRequestMethod();
 
             if ("GET".equalsIgnoreCase(method)) {
-                // Fetch all complaints with joined student details
                 String sql = "SELECT c.complaint_id, c.student_id, COALESCE(s.name, 'Unknown') AS student_name, " +
                              "COALESCE(s.department, 'N/A') AS department, c.category, c.description, " +
                              "c.evidence, c.status, c.date_filed, c.remarks " +
@@ -521,15 +1346,13 @@ public class App {
                         ));
                     }
                     sb.append("]");
-                    log("JDBC SELECT", "Fetched " + rowCount + " complaints from MySQL for Dashboard view.");
+                    log("JDBC SELECT", "Fetched " + rowCount + " complaints from MySQL.");
                     sendJsonResponse(ex, 200, sb.toString());
                 } catch (SQLException e) {
-                    log("JDBC SELECT ERROR", e.getMessage());
                     sendJsonResponse(ex, 500, "{\"error\":\"" + escape(e.getMessage()) + "\"}");
                 }
 
             } else if ("POST".equalsIgnoreCase(method)) {
-                // Submit new complaint
                 String body = readBody(ex);
                 Map<String, String> p = parseJsonSimple(body);
 
@@ -550,10 +1373,9 @@ public class App {
                     try (ResultSet k = s.getGeneratedKeys()) {
                         if (k.next()) newId = k.getInt(1);
                     }
-                    log("JDBC INSERT", "New complaint filed! ID #" + newId + " | Student ID: " + studentId + " | Category: " + category);
+                    log("JDBC INSERT", "New complaint filed! ID #" + newId + " | Student ID: " + studentId);
                     sendJsonResponse(ex, 200, "{\"success\":true,\"complaint_id\":" + newId + "}");
                 } catch (SQLException e) {
-                    log("JDBC INSERT ERROR", e.getMessage());
                     sendJsonResponse(ex, 500, "{\"success\":false,\"error\":\"" + escape(e.getMessage()) + "\"}");
                 }
             } else {
@@ -582,14 +1404,12 @@ public class App {
                 s.setInt(3, cid);
                 int count = s.executeUpdate();
                 if (count > 0) {
-                    log("JDBC UPDATE", "Complaint #" + cid + " status updated to '" + status + "' | Remarks: '" + remarks + "'");
+                    log("JDBC UPDATE", "Complaint #" + cid + " status updated to '" + status + "'");
                     sendJsonResponse(ex, 200, "{\"success\":true,\"message\":\"Complaint #" + cid + " updated.\"}");
                 } else {
-                    log("JDBC UPDATE", "Complaint #" + cid + " not found.");
                     sendJsonResponse(ex, 404, "{\"success\":false,\"message\":\"Complaint not found.\"}");
                 }
             } catch (SQLException e) {
-                log("JDBC UPDATE ERROR", e.getMessage());
                 sendJsonResponse(ex, 500, "{\"success\":false,\"error\":\"" + escape(e.getMessage()) + "\"}");
             }
         }
@@ -597,17 +1417,14 @@ public class App {
 
     static class DatabaseHandler implements HttpHandler {
         public void handle(HttpExchange ex) throws IOException {
-            // Returns raw tables for the Database Inspector
             try (Connection c = connect()) {
                 String studentsJson = queryToJson(c, "SELECT student_id, name, department, email, password, phone FROM students");
                 String adminJson = queryToJson(c, "SELECT admin_id, name, role, email, password FROM admin");
                 String complaintsJson = queryToJson(c, "SELECT complaint_id, student_id, category, description, evidence, status, date_filed, remarks FROM complaints ORDER BY complaint_id DESC");
 
-                log("JDBC INSPECT", "Database inspector accessed: Students, Admin, and Complaints tables dumped.");
                 String full = String.format("{\"students\":%s,\"admin\":%s,\"complaints\":%s}", studentsJson, adminJson, complaintsJson);
                 sendJsonResponse(ex, 200, full);
             } catch (SQLException e) {
-                log("JDBC INSPECT ERROR", e.getMessage());
                 sendJsonResponse(ex, 500, "{\"error\":\"" + escape(e.getMessage()) + "\"}");
             }
         }
@@ -638,10 +1455,6 @@ public class App {
             }
         }
     }
-
-    // =========================================================================
-    // STATIC FILE HANDLER (Serves web assets directly from Java)
-    // =========================================================================
 
     static class StaticFileHandler implements HttpHandler {
         public void handle(HttpExchange ex) throws IOException {
@@ -744,7 +1557,7 @@ public class App {
     }
 
     // =========================================================================
-    // HELPER METHODS
+    // JSON & STRING HELPERS
     // =========================================================================
 
     private static void sendJsonResponse(HttpExchange ex, int code, String json) throws IOException {
@@ -797,26 +1610,5 @@ public class App {
             }
         }
         return map;
-    }
-
-    // Minimal Swing Fallback if invoked with --swing
-    static class SwingLogin extends JFrame {
-        SwingLogin() {
-            setTitle("SecureU — Swing Interface");
-            setSize(450, 300);
-            setLocationRelativeTo(null);
-            setDefaultCloseOperation(EXIT_ON_CLOSE);
-            JPanel p = new JPanel(new GridLayout(0, 1, 10, 10));
-            p.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-            p.add(new JLabel("SecureU Swing Desktop Mode"));
-            p.add(new JLabel("For modern UI, run without --swing to launch the Java Desktop Engine."));
-            JButton btnLaunch = new JButton("Launch Modern Desktop Interface");
-            btnLaunch.addActionListener(e -> {
-                launchDesktopWindow("http://localhost:3000");
-                dispose();
-            });
-            p.add(btnLaunch);
-            add(p);
-        }
     }
 }

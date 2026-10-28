@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>SecureU — Pure Java Desktop Application (Swing & JDBC)</title>
+<style>
+body { font-family: Calibri, Arial, sans-serif; line-height: 1.5; color: #1e293b; margin: 30px; }
+h1 { color: #0f172a; border-bottom: 2px solid #0f172a; padding-bottom: 8px; font-size: 24pt; }
+h2 { color: #1e293b; border-bottom: 1px solid #cbd5e1; padding-bottom: 5px; margin-top: 24px; font-size: 16pt; }
+h3 { color: #334155; margin-top: 18px; font-size: 13pt; }
+code, pre { font-family: Consolas, 'Courier New', monospace; background: #f1f5f9; padding: 3px 6px; border-radius: 4px; }
+pre { background: #0f172a; color: #f8fafc; padding: 14px; border-radius: 6px; overflow-x: auto; font-size: 10pt; }
+table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+th, td { border: 1px solid #cbd5e1; padding: 8px 12px; text-align: left; }
+th { background: #f8fafc; color: #0f172a; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<h1>SecureU — Pure Java Desktop Application (Swing & JDBC)</h1>
+<p><strong>Course:</strong> Java Programming / DBMS Lab &bull; <strong>Framework:</strong> 100% Native Java Swing (JFrame) + MySQL JDBC</p>
+
+<h2>1. How to Launch the Pure Java Desktop App</h2>
+<p>Double-click <strong><code>Launch-CollegeComplaint.bat</code></strong> or <strong><code>run-desktop-java.bat</code></strong> in the project folder.</p>
+<pre>
+cd "C:\Users\Hariprasad\Videos\JAVA PROJECT"
+java -jar CollegeComplaint.jar
+</pre>
+
+<h2>2. Pure Java GUI Architecture</h2>
+<h3>Login Window (<code>App.LoginWindow</code> extends <code>JFrame</code>)</h3>
+<ul>
+  <li>Native desktop window built with <code>javax.swing.JFrame</code> and <code>GridBagLayout</code>.</li>
+  <li>Role selection dropdown (Student / Administrator).</li>
+  <li>Masked password field (<code>JPasswordField</code>).</li>
+  <li>Single-click demo helper buttons for instant viva demonstration.</li>
+</ul>
+
+<h3>Student Dashboard (<code>App.StudentDashboard</code> extends <code>JFrame</code>)</h3>
+<ul>
+  <li>Tabbed view (<code>JTabbedPane</code>):
+    <ol>
+      <li><strong>File Grievance:</strong> Category combo box, description text area with line wrap, submit button executing SQL <code>INSERT</code>.</li>
+      <li><strong>Track Status:</strong> Search complaint by ID, displaying real-time status and administrative remarks.</li>
+      <li><strong>Grievance History:</strong> <code>JTable</code> with custom cell renderer highlighting Pending, In Progress, and Resolved cases with color badges.</li>
+    </ol>
+  </li>
+</ul>
+
+<h3>Administrator Dashboard (<code>App.AdminDashboard</code> extends <code>JFrame</code>)</h3>
+<ul>
+  <li>4 KPI metric summary cards (Total, Pending, In Progress, Resolved).</li>
+  <li>Filter & search bar with status dropdown and keyword search.</li>
+  <li>Interactive <code>JTable</code>: clicking any row automatically populates the update controls.</li>
+  <li>Status update form: updates status and remarks via SQL <code>UPDATE</code> via JDBC.</li>
+</ul>
+
+<h2>3. Java Swing Components Used in Code</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Component</th>
+      <th>Class Used</th>
+      <th>Purpose</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Main Windows</strong></td>
+      <td><code>javax.swing.JFrame</code></td>
+      <td>Login, Student Dashboard, Admin Dashboard</td>
+    </tr>
+    <tr>
+      <td><strong>Tabbed Navigation</strong></td>
+      <td><code>javax.swing.JTabbedPane</code></td>
+      <td>Student portal tabs (File, Track, History)</td>
+    </tr>
+    <tr>
+      <td><strong>Table Rendering</strong></td>
+      <td><code>javax.swing.JTable</code></td>
+      <td>Displaying grievances with custom cell styling</td>
+    </tr>
+    <tr>
+      <td><strong>Table Data Binding</strong></td>
+      <td><code>javax.swing.table.DefaultTableModel</code></td>
+      <td>Dynamic binding from JDBC <code>ResultSet</code></td>
+    </tr>
+    <tr>
+      <td><strong>Form Inputs</strong></td>
+      <td><code>JTextField</code>, <code>JPasswordField</code>, <code>JComboBox</code></td>
+      <td>User input for email, passwords, categories, status</td>
+    </tr>
+    <tr>
+      <td><strong>Text Areas</strong></td>
+      <td><code>JTextArea</code>, <code>JScrollPane</code></td>
+      <td>Multi-line description with vertical scrolling</td>
+    </tr>
+    <tr>
+      <td><strong>Alerts & Dialogs</strong></td>
+      <td><code>JOptionPane</code></td>
+      <td>Submission confirmation and error notices</td>
+    </tr>
+  </tbody>
+</table>
+
+</body>
+</html>

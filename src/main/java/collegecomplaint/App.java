@@ -12,20 +12,23 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.sql.*;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 /**
- * CollegeComplaint — Complete Java Application
+ * SecureU — Java Backend & Terminal DBMS Redressal System
  * 
  * Architecture:
- * 1. Pure Java Backend Server (com.sun.net.httpserver.HttpServer)
+ * 1. Interactive Java Terminal Console & ASCII Table Reports (System.out)
  * 2. Real MySQL Database Connectivity via Java JDBC (java.sql.*)
- * 3. Java REST API Endpoints (/api/login, /api/complaints, /api/update, /api/db)
- * 4. Java Desktop Shell Launcher (Native frameless desktop window)
- * 5. Java Swing UI Fallback included
+ * 3. Pure Java Backend HTTP Server (com.sun.net.httpserver.HttpServer)
+ * 4. Real-time Live JDBC Logging in Terminal for all API queries
+ * 5. Java Desktop Shell Launcher & Swing UI Fallback
  */
 public class App {
     public static final int PORT = 3000;
@@ -37,36 +40,60 @@ public class App {
     static final File ROOT_DIR = new File(System.getProperty("user.dir"));
     static final File WEB_DIR = new File(ROOT_DIR, "web");
 
+    private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm:ss");
+
+    public static synchronized void log(String tag, String message) {
+        String time = LocalTime.now().format(TIME_FMT);
+        System.out.println(String.format("[%s] [%-13s] %s", time, tag, message));
+    }
+
     public static Connection connect() throws SQLException {
         return DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
     }
 
     public static void main(String[] args) {
-        // If --swing flag is passed, launch traditional Swing window
-        if (args.length > 0 && "--swing".equalsIgnoreCase(args[0])) {
+        boolean isCliOnly = false;
+        boolean isSwing = false;
+
+        for (String arg : args) {
+            if ("--swing".equalsIgnoreCase(arg)) isSwing = true;
+            if ("--cli".equalsIgnoreCase(arg) || "--terminal".equalsIgnoreCase(arg) || "--console".equalsIgnoreCase(arg) || "--no-gui".equalsIgnoreCase(arg)) {
+                isCliOnly = true;
+            }
+        }
+
+        if (isSwing) {
             System.out.println("[Java] Starting in Swing GUI Mode...");
             SwingUtilities.invokeLater(() -> new SwingLogin().setVisible(true));
             return;
         }
 
-        System.out.println("=======================================================");
-        System.out.println("   SecureU — Student Safety & Grievance Application");
-        System.out.println("   Course: Java Project / DBMS Lab");
-        System.out.println("   Powered by Java (JDK " + System.getProperty("java.version") + ") + MySQL JDBC");
-        System.out.println("=======================================================");
+        // 1. Print Master Banner in Terminal
+        System.out.println("========================================================================================");
+        System.out.println("            SECURE U — STUDENT SAFETY & GRIEVANCE REDRESSAL SYSTEM                      ");
+        System.out.println("            Course: Java Programming / DBMS Lab (Live Terminal Output)                  ");
+        System.out.println("            Powered by Java (JDK " + System.getProperty("java.version") + ") + MySQL JDBC (java.sql.*)          ");
+        System.out.println("========================================================================================");
 
-        // 1. Verify MySQL Connection
+        // 2. Connect to MySQL & Seed Sample Data
         try (Connection c = connect()) {
-            System.out.println("✅ [Java JDBC] Successfully connected to MySQL database: CollegeComplaint");
+            System.out.println("[OK] [Java JDBC] Successfully connected to MySQL database: CollegeComplaint");
             seedSampleData(c);
+            
+            // Print Terminal Summary & Initial ASCII Table
+            printDatabaseSummary(c);
+            System.out.println("\n>>> RECENT GRIEVANCES / COMPLAINTS FETCHED VIA JDBC (TERMINAL OUTPUT):");
+            printComplaintsTable(c, null, 10);
+
         } catch (SQLException e) {
-            System.err.println("⚠️ [Java JDBC] MySQL connection notice: " + e.getMessage());
-            System.err.println("   (Ensure XAMPP MySQL is running on port 3306)");
+            System.err.println("[WARN] [Java JDBC] MySQL notice: " + e.getMessage());
+            System.err.println("       (Make sure XAMPP / MySQL service is started on port 3306)");
         }
 
-        // 2. Start Built-in Java HTTP Server
+        // 3. Start Built-in Java HTTP Server
+        HttpServer server = null;
         try {
-            HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
+            server = HttpServer.create(new InetSocketAddress(PORT), 0);
             
             // API Handlers (Pure Java JDBC)
             server.createContext("/api/status", new StatusHandler());
@@ -81,124 +108,293 @@ public class App {
             server.setExecutor(null); // default executor
             server.start();
 
-            System.out.println("🚀 [Java Server] Web/REST engine running at: http://localhost:" + PORT);
-            System.out.println("📁 [Java Server] Serving frontend from: " + WEB_DIR.getAbsolutePath());
+            log("SERVER", "HTTP & REST API active at http://localhost:" + PORT);
+            log("SERVER", "Frontend directory: " + WEB_DIR.getAbsolutePath());
 
-            // 3. Launch Desktop Window
-            launchDesktopWindow("http://localhost:" + PORT);
-
-            // 4. Keep server running indefinitely until terminated
-            System.out.println("⚡ [Java Server] Server active. Press Ctrl+C in terminal to stop.");
-            Thread.currentThread().join();
+            if (!isCliOnly) {
+                // Launch Desktop Window in Edge/Chrome
+                launchDesktopWindow("http://localhost:" + PORT);
+            } else {
+                log("CONSOLE", "Running in pure Terminal Console Mode (GUI auto-launch skipped).");
+            }
 
         } catch (Exception e) {
-            System.err.println("❌ [Java Server] Server exception: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("[ERROR] [Java Server] Could not bind server to port " + PORT + ": " + e.getMessage());
         }
+
+        // 4. Start Interactive Terminal CLI Loop
+        runInteractiveTerminalCli();
     }
 
     // =========================================================================
-    // SAMPLE DATA SEEDER (JDBC) — runs once if the complaints table is small
+    // TERMINAL REPORTING & ASCII TABLES (Direct System.out Output)
     // =========================================================================
-    static void seedSampleData(Connection c) {
+
+    public static void printDatabaseSummary(Connection c) {
         try {
-            String[][] students = {
-                {"1","Abhinav U","CSE","abhinav@example.com","9876543210"},
-                {"2","Sneha S","ECE","sneha@example.com","8765432109"},
-                {"3","Rahul V","MECH","rahul@example.com","9123456780"},
-                {"4","Priya S","ECE","priya.s@example.com","9988776655"},
-                {"5","Vignesh R","CIVIL","vignesh@example.com","9090909090"},
-                {"6","Anjali K","CSE","anjali@example.com","9811122233"},
-                {"7","Mohammed F","EEE","farhan@example.com","9822233344"},
-                {"8","Divya M","IT","divya@example.com","9833344455"},
-                {"9","Karthik N","MECH","karthik@example.com","9844455566"},
-                {"10","Fathima Z","CSE","fathima@example.com","9855566677"},
-                {"11","Arjun P","EEE","arjun@example.com","9866677788"},
-                {"12","Meera J","IT","meera@example.com","9877788899"}
-            };
-            try (PreparedStatement ps = c.prepareStatement(
-                    "INSERT IGNORE INTO students(student_id,name,department,email,password,phone) VALUES(?,?,?,?, 'student@123', ?)")) {
-                for (String[] s : students) {
-                    ps.setInt(1, Integer.parseInt(s[0]));
-                    ps.setString(2, s[1]); ps.setString(3, s[2]); ps.setString(4, s[3]); ps.setString(5, s[4]);
-                    ps.addBatch();
-                }
-                ps.executeBatch();
-            }
+            int totalStudents = 0, totalComplaints = 0;
+            int pending = 0, inProgress = 0, resolved = 0;
 
-            int existing = 0;
+            try (Statement st = c.createStatement(); ResultSet r = st.executeQuery("SELECT COUNT(*) FROM students")) {
+                if (r.next()) totalStudents = r.getInt(1);
+            }
             try (Statement st = c.createStatement(); ResultSet r = st.executeQuery("SELECT COUNT(*) FROM complaints")) {
-                if (r.next()) existing = r.getInt(1);
+                if (r.next()) totalComplaints = r.getInt(1);
             }
-            if (existing >= 25) return;
-
-            // {student_id, category, description, evidence, status, days_ago, remarks}
-            String[][] rows = {
-                {"1","Hostel","Hot water geyser on 2nd floor of Block B not working for 3 days.","geyser_photo.jpg","In Progress","4","Electrician assigned. Heating coil being replaced."},
-                {"2","Academic","DSP lab workstation #14 crashes repeatedly during practicals.","lab_bsod.png","Pending","2",null},
-                {"3","Academic","Internal assessment marks for Thermodynamics not updated on portal.",null,"Pending","1",null},
-                {"4","Food","Mess dinner served stale rice on Wednesday night.","mess_rice.jpg","Resolved","9","Food committee inspected. Vendor warned and menu revised."},
-                {"5","Other","Classroom 204 air conditioner not working.","ac_room204.jpg","Resolved","12","AC compressor repaired by maintenance."},
-                {"6","Verbal Harassment","Senior students using abusive language in hostel corridor.",null,"In Progress","6","Anti-ragging committee investigating."},
-                {"7","Academic","Revaluation request for Circuits paper not processed.","reval_receipt.pdf","Pending","3",null},
-                {"8","Hostel","Wi-Fi in Girls Hostel Block C down for a week.",null,"Resolved","15","Router replaced; bandwidth upgraded."},
-                {"9","Food","Drinking water dispenser in canteen is unhygienic.","dispenser.jpg","Resolved","20","Filter replaced and weekly cleaning scheduled."},
-                {"10","Physical Harassment","Ragging incident reported near hostel mess.",null,"In Progress","5","Statements recorded. Disciplinary committee meeting scheduled."},
-                {"11","Academic","Library not open on weekends during exam season.",null,"Resolved","25","Weekend library hours extended till 8 PM."},
-                {"12","Other","Street lights near parking area not working.","parking_dark.jpg","Pending","7",null},
-                {"1","Food","Insects found in breakfast sambar.","sambar.jpg","Resolved","34","Kitchen deep cleaned; pest control done."},
-                {"2","Hostel","Bathroom taps leaking in Block A, room 112.",null,"Resolved","38","Plumber fixed leakage."},
-                {"3","Academic","Faculty frequently absent for Machine Design lectures.",null,"Resolved","41","HOD discussed with faculty; extra classes arranged."},
-                {"4","Verbal Harassment","Lab assistant shouts at students during practicals.",null,"Resolved","45","Counselling given to staff member."},
-                {"5","Hostel","Room fan making loud noise and slow.",null,"Resolved","48","Fan replaced."},
-                {"6","Academic","Projector in Seminar Hall not working.","projector.jpg","In Progress","50","New projector purchase approved."},
-                {"7","Other","Bus route 7 consistently late by 30 minutes.",null,"Pending","52",null},
-                {"8","Food","Canteen overcharging for snacks.","bill.jpg","Resolved","55","Price list displayed; vendor warned."},
-                {"9","Hostel","Mosquito problem in hostel rooms.",null,"Resolved","63","Fogging done and window nets installed."},
-                {"10","Academic","Exam timetable clash between two electives.",null,"Resolved","66","Exam rescheduled by controller."},
-                {"11","Physical Harassment","Student pushed during inter-department match.",null,"Resolved","70","Sports committee issued warning."},
-                {"12","Food","No vegetarian option on Sunday dinner.",null,"Resolved","72","Menu updated."},
-                {"1","Academic","Lab manual not provided for Compiler Design lab.",null,"Resolved","76","Manuals distributed."},
-                {"2","Hostel","Hostel gate closes before library closing time.",null,"In Progress","80","Proposal sent to Dean."},
-                {"3","Other","Drinking water cooler in Mech block not cooling.",null,"Resolved","84","Cooler serviced."},
-                {"4","Academic","Attendance wrongly marked absent for 3 days.","attendance.png","Resolved","88","Attendance corrected."},
-                {"5","Food","Mess timings too short for lab students.",null,"Pending","92",null},
-                {"6","Hostel","Laundry machine broken in Girls Hostel.",null,"Resolved","96","Machine repaired."},
-                {"7","Verbal Harassment","Derogatory comments on department WhatsApp group.","screenshot.png","Resolved","101","Students counselled; group moderated."},
-                {"8","Academic","Internship NOC delayed by department office.",null,"Resolved","105","NOC issued."},
-                {"9","Other","Gym equipment damaged.",null,"In Progress","110","Quotation requested for replacement."},
-                {"10","Hostel","Power cuts every night in Block D.",null,"Resolved","115","Wiring fixed; inverter installed."},
-                {"11","Academic","Question paper had out-of-syllabus questions.",null,"Resolved","120","Grace marks awarded."},
-                {"12","Food","Juice stall hygiene issues.",null,"Resolved","126","Stall licence reviewed."},
-                {"1","Hostel","Water tank not cleaned for months.",null,"Resolved","132","Tank cleaned."},
-                {"2","Academic","Delay in publishing semester results.",null,"Resolved","138","Results published."},
-                {"3","Other","Parking space insufficient for two-wheelers.",null,"Pending","142",null},
-                {"4","Physical Harassment","Fight between students outside canteen.",null,"Resolved","148","Both parties suspended for 3 days."},
-                {"5","Food","Mess food too spicy every day.",null,"Resolved","152","Spice levels reduced."},
-                {"6","Academic","Lab computers lack required software (MATLAB).",null,"Resolved","158","Licences installed."},
-                {"7","Hostel","Broken window in room 305.",null,"Resolved","164","Glass replaced."},
-                {"8","Other","Medical room closed during evening hours.",null,"In Progress","170","Nurse duty extension under review."},
-                {"9","Academic","Assignment deadlines clashing across subjects.",null,"Resolved","175","Faculty coordinated new schedule."}
-            };
-            String sql = "INSERT INTO complaints (student_id, category, description, evidence, status, date_filed, remarks) " +
-                         "VALUES (?, ?, ?, ?, ?, DATE_SUB(CURRENT_DATE(), INTERVAL ? DAY), ?)";
-            try (PreparedStatement ps = c.prepareStatement(sql)) {
-                for (String[] r : rows) {
-                    ps.setInt(1, Integer.parseInt(r[0]));
-                    ps.setString(2, r[1]);
-                    ps.setString(3, r[2]);
-                    ps.setString(4, r[3]);
-                    ps.setString(5, r[4]);
-                    ps.setInt(6, Integer.parseInt(r[5]));
-                    ps.setString(7, r[6]);
-                    ps.addBatch();
+            try (Statement st = c.createStatement(); ResultSet r = st.executeQuery("SELECT status, COUNT(*) FROM complaints GROUP BY status")) {
+                while (r.next()) {
+                    String s = r.getString(1);
+                    int cnt = r.getInt(2);
+                    if ("Pending".equalsIgnoreCase(s)) pending = cnt;
+                    else if ("In Progress".equalsIgnoreCase(s)) inProgress = cnt;
+                    else if ("Resolved".equalsIgnoreCase(s)) resolved = cnt;
                 }
-                ps.executeBatch();
             }
-            System.out.println("🌱 [Java JDBC] Seeded " + rows.length + " sample complaints for dashboard analytics.");
+
+            System.out.println("----------------------------------------------------------------------------------------");
+            System.out.println("  DATABASE METRICS OVERVIEW (LIVE MYSQL COUNTS):");
+            System.out.printf("  * Total Students Registered : %d\n", totalStudents);
+            System.out.printf("  * Total Complaints Logged   : %d\n", totalComplaints);
+            System.out.printf("  * Status Breakdown          : [ Pending: %d ] | [ In Progress: %d ] | [ Resolved: %d ]\n",
+                    pending, inProgress, resolved);
+            System.out.println("----------------------------------------------------------------------------------------");
         } catch (SQLException e) {
-            System.err.println("⚠️ [Java JDBC] Sample seeding skipped: " + e.getMessage());
+            System.err.println("[WARN] Could not compute database summary: " + e.getMessage());
         }
+    }
+
+    public static void printComplaintsTable(Connection c, String statusFilter, int limit) {
+        String sql = "SELECT c.complaint_id, COALESCE(s.name, 'Unknown') AS student_name, " +
+                     "COALESCE(s.department, 'N/A') AS department, c.category, c.status, c.date_filed, c.description " +
+                     "FROM complaints c LEFT JOIN students s ON c.student_id=s.student_id ";
+        if (statusFilter != null && !statusFilter.trim().isEmpty()) {
+            sql += "WHERE c.status = '" + statusFilter.replace("'", "''") + "' ";
+        }
+        sql += "ORDER BY c.complaint_id DESC";
+        if (limit > 0) {
+            sql += " LIMIT " + limit;
+        }
+
+        try (Statement st = c.createStatement(); ResultSet r = st.executeQuery(sql)) {
+            System.out.println("+-----+--------------------+-------+-------------------+-------------+------------+---------------------------------------+");
+            System.out.println("| ID  | Student Name       | Dept  | Category          | Status      | Filed Date | Description                           |");
+            System.out.println("+-----+--------------------+-------+-------------------+-------------+------------+---------------------------------------+");
+            
+            int count = 0;
+            while (r.next()) {
+                count++;
+                int id = r.getInt("complaint_id");
+                String name = pad(r.getString("student_name"), 18);
+                String dept = pad(r.getString("department"), 5);
+                String cat = pad(r.getString("category"), 17);
+                String status = pad(r.getString("status"), 11);
+                String date = pad(r.getString("date_filed"), 10);
+                String desc = pad(r.getString("description"), 37);
+
+                System.out.printf("| %-3d | %s | %s | %s | %s | %s | %s |\n",
+                        id, name, dept, cat, status, date, desc);
+            }
+            System.out.println("+-----+--------------------+-------+-------------------+-------------+------------+---------------------------------------+");
+            System.out.println("  (Total displayed: " + count + " records from MySQL database)");
+        } catch (SQLException e) {
+            System.err.println("[ERROR] Failed to fetch complaints table: " + e.getMessage());
+        }
+    }
+
+    public static void printStudentsTable(Connection c) {
+        String sql = "SELECT student_id, name, department, email, phone FROM students ORDER BY student_id ASC";
+        try (Statement st = c.createStatement(); ResultSet r = st.executeQuery(sql)) {
+            System.out.println("\n>>> ALL REGISTERED STUDENTS IN DATABASE (TERMINAL OUTPUT):");
+            System.out.println("+----+--------------------+-------+---------------------------+------------+");
+            System.out.println("| ID | Name               | Dept  | Email                     | Phone      |");
+            System.out.println("+----+--------------------+-------+---------------------------+------------+");
+            int count = 0;
+            while (r.next()) {
+                count++;
+                int id = r.getInt("student_id");
+                String name = pad(r.getString("name"), 18);
+                String dept = pad(r.getString("department"), 5);
+                String email = pad(r.getString("email"), 25);
+                String phone = pad(r.getString("phone"), 10);
+
+                System.out.printf("| %-2d | %s | %s | %s | %s |\n", id, name, dept, email, phone);
+            }
+            System.out.println("+----+--------------------+-------+---------------------------+------------+");
+            System.out.println("  (Total registered students: " + count + ")");
+        } catch (SQLException e) {
+            System.err.println("[ERROR] Failed to fetch students: " + e.getMessage());
+        }
+    }
+
+    private static String pad(String s, int width) {
+        if (s == null) s = "-";
+        s = s.replace("\n", " ").replace("\r", " ").trim();
+        if (s.length() > width) {
+            return s.substring(0, Math.max(0, width - 3)) + "...";
+        }
+        return String.format("%-" + width + "s", s);
+    }
+
+    // =========================================================================
+    // INTERACTIVE TERMINAL COMMAND LOOP (CLI MODE)
+    // =========================================================================
+
+    private static void runInteractiveTerminalCli() {
+        printMenuHelp();
+
+        Scanner scanner = new Scanner(System.in);
+        while (true) {
+            System.out.print("\n[SecureU Console] Enter command (1-8, menu, exit) > ");
+            String line;
+            try {
+                if (!scanner.hasNextLine()) break;
+                line = scanner.nextLine().trim();
+            } catch (Exception e) {
+                break;
+            }
+
+            if (line.isEmpty()) continue;
+
+            if ("0".equals(line) || "exit".equalsIgnoreCase(line) || "quit".equalsIgnoreCase(line)) {
+                System.out.println("\n[Java] Shutting down SecureU application. Goodbye!");
+                System.exit(0);
+                return;
+            }
+
+            try (Connection c = connect()) {
+                switch (line.toLowerCase()) {
+                    case "1":
+                        System.out.println("\n>>> FULL COMPLAINTS TABLE (ALL RECORDS):");
+                        printComplaintsTable(c, null, 100);
+                        break;
+
+                    case "2":
+                        System.out.println("\nFilter options: [P] Pending  |  [I] In Progress  |  [R] Resolved");
+                        System.out.print("Enter status filter (P/I/R): ");
+                        String sf = scanner.nextLine().trim().toUpperCase();
+                        String filter = null;
+                        if (sf.startsWith("P")) filter = "Pending";
+                        else if (sf.startsWith("I")) filter = "In Progress";
+                        else if (sf.startsWith("R")) filter = "Resolved";
+
+                        if (filter != null) {
+                            System.out.println("\n>>> FILTERED COMPLAINTS (Status = " + filter + "):");
+                            printComplaintsTable(c, filter, 100);
+                        } else {
+                            System.out.println("Invalid selection. Showing all.");
+                            printComplaintsTable(c, null, 100);
+                        }
+                        break;
+
+                    case "3":
+                        printStudentsTable(c);
+                        break;
+
+                    case "4":
+                        System.out.println("\n--- [FILE COMPLAINT VIA TERMINAL] ---");
+                        System.out.print("Enter Student ID (1-12) [default 1]: ");
+                        String sidStr = scanner.nextLine().trim();
+                        int sid = sidStr.isEmpty() ? 1 : Integer.parseInt(sidStr);
+
+                        System.out.println("Categories: Academic, Hostel, Food, Verbal Harassment, Physical Harassment, Other");
+                        System.out.print("Enter Category [Hostel]: ");
+                        String cat = scanner.nextLine().trim();
+                        if (cat.isEmpty()) cat = "Hostel";
+
+                        System.out.print("Enter Complaint Description: ");
+                        String desc = scanner.nextLine().trim();
+                        if (desc.isEmpty()) desc = "Issue reported via Java Terminal Console.";
+
+                        String insertSql = "INSERT INTO complaints (student_id, category, description, status, date_filed) VALUES (?, ?, ?, 'Pending', CURRENT_DATE())";
+                        try (PreparedStatement ps = c.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+                            ps.setInt(1, sid);
+                            ps.setString(2, cat);
+                            ps.setString(3, desc);
+                            ps.executeUpdate();
+                            int newId = -1;
+                            try (ResultSet k = ps.getGeneratedKeys()) {
+                                if (k.next()) newId = k.getInt(1);
+                            }
+                            System.out.println("[SUCCESS] New complaint logged with ID #" + newId + " in MySQL database!");
+                            log("TERMINAL INSERT", "Complaint #" + newId + " filed for Student ID " + sid);
+                        }
+                        break;
+
+                    case "5":
+                        System.out.println("\n--- [UPDATE COMPLAINT STATUS VIA TERMINAL] ---");
+                        System.out.print("Enter Complaint ID to update: ");
+                        int cid = Integer.parseInt(scanner.nextLine().trim());
+
+                        System.out.println("Available Statuses: [1] Pending  [2] In Progress  [3] Resolved");
+                        System.out.print("Select Status (1/2/3) [3]: ");
+                        String opt = scanner.nextLine().trim();
+                        String newStatus = "Resolved";
+                        if ("1".equals(opt)) newStatus = "Pending";
+                        else if ("2".equals(opt)) newStatus = "In Progress";
+
+                        System.out.print("Enter Administrative Remarks: ");
+                        String remarks = scanner.nextLine().trim();
+                        if (remarks.isEmpty()) remarks = "Status updated via Java Terminal Console.";
+
+                        String updSql = "UPDATE complaints SET status=?, remarks=? WHERE complaint_id=?";
+                        try (PreparedStatement ps = c.prepareStatement(updSql)) {
+                            ps.setString(1, newStatus);
+                            ps.setString(2, remarks);
+                            ps.setInt(3, cid);
+                            int rows = ps.executeUpdate();
+                            if (rows > 0) {
+                                System.out.println("[SUCCESS] Complaint #" + cid + " successfully updated to '" + newStatus + "'!");
+                                log("TERMINAL UPDATE", "Complaint #" + cid + " set to " + newStatus);
+                            } else {
+                                System.out.println("[WARN] No complaint found with ID #" + cid);
+                            }
+                        }
+                        break;
+
+                    case "6":
+                        printDatabaseSummary(c);
+                        break;
+
+                    case "7":
+                        launchDesktopWindow("http://localhost:" + PORT);
+                        System.out.println("[OK] Opened browser window to http://localhost:" + PORT);
+                        break;
+
+                    case "8":
+                    case "menu":
+                    case "help":
+                        printMenuHelp();
+                        break;
+
+                    default:
+                        System.out.println("Unknown option '" + line + "'. Type 'menu' or '8' for list of commands.");
+                        break;
+                }
+            } catch (SQLException e) {
+                System.err.println("[JDBC ERROR] " + e.getMessage());
+            } catch (Exception e) {
+                System.err.println("[INPUT ERROR] " + e.getMessage());
+            }
+        }
+    }
+
+    private static void printMenuHelp() {
+        System.out.println("\n========================================================================================");
+        System.out.println("                          SECURE U — TERMINAL CONSOLE COMMANDS                          ");
+        System.out.println("========================================================================================");
+        System.out.println("  [1] View All Complaints Table (Full terminal table with IDs & status)");
+        System.out.println("  [2] Filter Complaints by Status (Pending / In Progress / Resolved)");
+        System.out.println("  [3] View All Registered Students Table");
+        System.out.println("  [4] Submit New Complaint (Interactive Terminal Input)");
+        System.out.println("  [5] Update Complaint Status & Remarks (Interactive Terminal Input)");
+        System.out.println("  [6] View Live Database Summary & Metrics");
+        System.out.println("  [7] Open / Re-open Web GUI Browser (http://localhost:" + PORT + ")");
+        System.out.println("  [8] Show This Menu Again (or type 'menu')");
+        System.out.println("  [0] Exit Application (or type 'exit')");
+        System.out.println("========================================================================================");
+        System.out.println("  * Web GUI and REST endpoints are running simultaneously.");
+        System.out.println("  * Any action in browser will be logged LIVE in this terminal below.");
+        System.out.println("========================================================================================");
     }
 
     // Launch standalone frameless desktop window
@@ -216,7 +412,7 @@ public class App {
                 for (String path : possiblePaths) {
                     File f = new File(path);
                     if (f.exists()) {
-                        System.out.println("🖥️ [Java Shell] Launching Standalone Desktop Window: " + f.getName());
+                        log("DESKTOP SHELL", "Launching Standalone Desktop Window: " + f.getName());
                         new ProcessBuilder(path, "--app=" + url, "--start-maximized").start();
                         return;
                     }
@@ -233,7 +429,7 @@ public class App {
     }
 
     // =========================================================================
-    // JAVA REST API HANDLERS (JDBC)
+    // JAVA REST API HANDLERS (JDBC with Live Terminal Logging)
     // =========================================================================
 
     static class StatusHandler implements HttpHandler {
@@ -268,18 +464,23 @@ public class App {
                 s.setString(2, password);
                 try (ResultSet r = s.executeQuery()) {
                     if (r.next()) {
+                        String userName = r.getString(2);
+                        log("JDBC LOGIN", "SUCCESS: " + (isAdmin ? "Admin " : "Student ") + "'" + userName + "' (" + email + ") authenticated.");
+                        
                         String userJson = isAdmin
                             ? String.format("{\"role\":\"admin\",\"data\":{\"admin_id\":%d,\"name\":\"%s\",\"role\":\"%s\",\"email\":\"%s\"}}",
-                                r.getInt(1), escape(r.getString(2)), escape(r.getString(3)), escape(r.getString(4)))
+                                r.getInt(1), escape(userName), escape(r.getString(3)), escape(r.getString(4)))
                             : String.format("{\"role\":\"student\",\"data\":{\"student_id\":%d,\"name\":\"%s\",\"department\":\"%s\",\"email\":\"%s\"}}",
-                                r.getInt(1), escape(r.getString(2)), escape(r.getString(3)), escape(r.getString(4)));
+                                r.getInt(1), escape(userName), escape(r.getString(3)), escape(r.getString(4)));
 
                         sendJsonResponse(ex, 200, "{\"success\":true,\"user\":" + userJson + "}");
                         return;
                     }
                 }
+                log("JDBC LOGIN", "FAILED: Invalid credentials for " + email);
                 sendJsonResponse(ex, 401, "{\"success\":false,\"message\":\"Invalid email or password.\"}");
             } catch (SQLException e) {
+                log("JDBC LOGIN ERROR", e.getMessage());
                 sendJsonResponse(ex, 500, "{\"success\":false,\"error\":\"" + escape(e.getMessage()) + "\"}");
             }
         }
@@ -299,7 +500,9 @@ public class App {
                 try (Connection c = connect(); PreparedStatement s = c.prepareStatement(sql); ResultSet r = s.executeQuery()) {
                     StringBuilder sb = new StringBuilder("[");
                     boolean first = true;
+                    int rowCount = 0;
                     while (r.next()) {
+                        rowCount++;
                         if (!first) sb.append(",");
                         first = false;
                         sb.append(String.format("{\"complaint_id\":%d,\"student_id\":%d,\"student_name\":\"%s\"," +
@@ -318,8 +521,10 @@ public class App {
                         ));
                     }
                     sb.append("]");
+                    log("JDBC SELECT", "Fetched " + rowCount + " complaints from MySQL for Dashboard view.");
                     sendJsonResponse(ex, 200, sb.toString());
                 } catch (SQLException e) {
+                    log("JDBC SELECT ERROR", e.getMessage());
                     sendJsonResponse(ex, 500, "{\"error\":\"" + escape(e.getMessage()) + "\"}");
                 }
 
@@ -345,8 +550,10 @@ public class App {
                     try (ResultSet k = s.getGeneratedKeys()) {
                         if (k.next()) newId = k.getInt(1);
                     }
+                    log("JDBC INSERT", "New complaint filed! ID #" + newId + " | Student ID: " + studentId + " | Category: " + category);
                     sendJsonResponse(ex, 200, "{\"success\":true,\"complaint_id\":" + newId + "}");
                 } catch (SQLException e) {
+                    log("JDBC INSERT ERROR", e.getMessage());
                     sendJsonResponse(ex, 500, "{\"success\":false,\"error\":\"" + escape(e.getMessage()) + "\"}");
                 }
             } else {
@@ -375,11 +582,14 @@ public class App {
                 s.setInt(3, cid);
                 int count = s.executeUpdate();
                 if (count > 0) {
+                    log("JDBC UPDATE", "Complaint #" + cid + " status updated to '" + status + "' | Remarks: '" + remarks + "'");
                     sendJsonResponse(ex, 200, "{\"success\":true,\"message\":\"Complaint #" + cid + " updated.\"}");
                 } else {
+                    log("JDBC UPDATE", "Complaint #" + cid + " not found.");
                     sendJsonResponse(ex, 404, "{\"success\":false,\"message\":\"Complaint not found.\"}");
                 }
             } catch (SQLException e) {
+                log("JDBC UPDATE ERROR", e.getMessage());
                 sendJsonResponse(ex, 500, "{\"success\":false,\"error\":\"" + escape(e.getMessage()) + "\"}");
             }
         }
@@ -393,9 +603,11 @@ public class App {
                 String adminJson = queryToJson(c, "SELECT admin_id, name, role, email, password FROM admin");
                 String complaintsJson = queryToJson(c, "SELECT complaint_id, student_id, category, description, evidence, status, date_filed, remarks FROM complaints ORDER BY complaint_id DESC");
 
+                log("JDBC INSPECT", "Database inspector accessed: Students, Admin, and Complaints tables dumped.");
                 String full = String.format("{\"students\":%s,\"admin\":%s,\"complaints\":%s}", studentsJson, adminJson, complaintsJson);
                 sendJsonResponse(ex, 200, full);
             } catch (SQLException e) {
+                log("JDBC INSPECT ERROR", e.getMessage());
                 sendJsonResponse(ex, 500, "{\"error\":\"" + escape(e.getMessage()) + "\"}");
             }
         }
@@ -458,6 +670,76 @@ public class App {
             try (OutputStream os = ex.getResponseBody()) {
                 os.write(bytes);
             }
+        }
+    }
+
+    // =========================================================================
+    // SAMPLE DATA SEEDER (JDBC)
+    // =========================================================================
+    static void seedSampleData(Connection c) {
+        try {
+            String[][] students = {
+                {"1","Abhinav U","CSE","abhinav@example.com","9876543210"},
+                {"2","Sneha S","ECE","sneha@example.com","8765432109"},
+                {"3","Rahul V","MECH","rahul@example.com","9123456780"},
+                {"4","Priya S","ECE","priya.s@example.com","9988776655"},
+                {"5","Vignesh R","CIVIL","vignesh@example.com","9090909090"},
+                {"6","Anjali K","CSE","anjali@example.com","9811122233"},
+                {"7","Mohammed F","EEE","farhan@example.com","9822233344"},
+                {"8","Divya M","IT","divya@example.com","9833344455"},
+                {"9","Karthik N","MECH","karthik@example.com","9844455566"},
+                {"10","Fathima Z","CSE","fathima@example.com","9855566677"},
+                {"11","Arjun P","EEE","arjun@example.com","9866677788"},
+                {"12","Meera J","IT","meera@example.com","9877788899"}
+            };
+            try (PreparedStatement ps = c.prepareStatement(
+                    "INSERT IGNORE INTO students(student_id,name,department,email,password,phone) VALUES(?,?,?,?, 'student@123', ?)")) {
+                for (String[] s : students) {
+                    ps.setInt(1, Integer.parseInt(s[0]));
+                    ps.setString(2, s[1]); ps.setString(3, s[2]); ps.setString(4, s[3]); ps.setString(5, s[4]);
+                    ps.addBatch();
+                }
+                ps.executeBatch();
+            }
+
+            int existing = 0;
+            try (Statement st = c.createStatement(); ResultSet r = st.executeQuery("SELECT COUNT(*) FROM complaints")) {
+                if (r.next()) existing = r.getInt(1);
+            }
+            if (existing >= 25) return;
+
+            String[][] rows = {
+                {"1","Hostel","Hot water geyser on 2nd floor of Block B not working for 3 days.","geyser_photo.jpg","In Progress","4","Electrician assigned. Heating coil being replaced."},
+                {"2","Academic","DSP lab workstation #14 crashes repeatedly during practicals.","lab_bsod.png","Pending","2",null},
+                {"3","Academic","Internal assessment marks for Thermodynamics not updated on portal.",null,"Pending","1",null},
+                {"4","Food","Mess dinner served stale rice on Wednesday night.","mess_rice.jpg","Resolved","9","Food committee inspected. Vendor warned and menu revised."},
+                {"5","Other","Classroom 204 air conditioner not working.","ac_room204.jpg","Resolved","12","AC compressor repaired by maintenance."},
+                {"6","Verbal Harassment","Senior students using abusive language in hostel corridor.",null,"In Progress","6","Anti-ragging committee investigating."},
+                {"7","Academic","Revaluation request for Circuits paper not processed.","reval_receipt.pdf","Pending","3",null},
+                {"8","Hostel","Wi-Fi in Girls Hostel Block C down for a week.",null,"Resolved","15","Router replaced; bandwidth upgraded."},
+                {"9","Food","Drinking water dispenser in canteen is unhygienic.","dispenser.jpg","Resolved","20","Filter replaced and weekly cleaning scheduled."},
+                {"10","Physical Harassment","Ragging incident reported near hostel mess.",null,"In Progress","5","Statements recorded. Disciplinary committee meeting scheduled."},
+                {"11","Academic","Library not open on weekends during exam season.",null,"Resolved","25","Weekend library hours extended till 8 PM."},
+                {"12","Other","Street lights near parking area not working.","parking_dark.jpg","Pending","7",null}
+            };
+            String sql = "INSERT INTO complaints (student_id, category, description, evidence, status, date_filed, remarks) " +
+                         "VALUES (?, ?, ?, ?, ?, DATE_SUB(CURRENT_DATE(), INTERVAL ? DAY), ?)";
+            try (PreparedStatement ps = c.prepareStatement(sql)) {
+                for (String[] r : rows) {
+                    ps.setInt(1, Integer.parseInt(r[0]));
+                    ps.setString(2, r[1]);
+                    ps.setString(3, r[2]);
+                    ps.setString(4, r[3]);
+                    ps.setString(5, r[4]);
+                    ps.setInt(6, Integer.parseInt(r[5]));
+                    ps.setString(7, r[6]);
+                    ps.addBatch();
+                }
+                ps.executeBatch();
+            }
+            log("JDBC SEED", "Seeded " + rows.length + " sample complaints into MySQL.");
+        } catch (SQLException e) {
+            log("JDBC SEED NOTICE", e.getMessage());
         }
     }
 

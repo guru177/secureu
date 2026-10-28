@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>SecureU — Teacher Terminal Output & Lab Presentation Guide</title>
+<style>
+body { font-family: Calibri, Arial, sans-serif; line-height: 1.5; color: #1e293b; margin: 30px; }
+h1 { color: #0f172a; border-bottom: 2px solid #0f172a; padding-bottom: 8px; font-size: 24pt; }
+h2 { color: #1e293b; border-bottom: 1px solid #cbd5e1; padding-bottom: 5px; margin-top: 24px; font-size: 16pt; }
+h3 { color: #334155; margin-top: 18px; font-size: 13pt; }
+code, pre { font-family: Consolas, 'Courier New', monospace; background: #f1f5f9; padding: 3px 6px; border-radius: 4px; }
+pre { background: #0f172a; color: #f8fafc; padding: 14px; border-radius: 6px; overflow-x: auto; font-size: 10pt; }
+table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+th, td { border: 1px solid #cbd5e1; padding: 8px 12px; text-align: left; }
+th { background: #f8fafc; color: #0f172a; font-weight: bold; }
+.badge { display: inline-block; background: #0f172a; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 9pt; }
+</style>
+</head>
+<body>
+
+<h1>SecureU — Teacher Terminal Output & Lab Presentation Guide</h1>
+<p><strong>Course:</strong> Java Programming / DBMS Lab &bull; <strong>Powered by:</strong> Java JDK 27 + MySQL JDBC (java.sql.*)</p>
+
+<h2>Method 1: One-Click Terminal Launcher (Recommended)</h2>
+<ol>
+  <li>Open the project folder: <code>JAVA PROJECT</code></li>
+  <li>Double-click <strong><code>Launch-Terminal-Console.bat</code></strong></li>
+  <li>A Command Prompt window immediately opens and displays:
+    <ul>
+      <li>Application Banner with JDK version and MySQL connection status.</li>
+      <li>Live MySQL Metrics Overview (Total students, complaints, breakdown).</li>
+      <li>Formatted ASCII Complaints Table fetched via JDBC.</li>
+      <li>Interactive Console Menu (commands 1 to 8).</li>
+    </ul>
+  </li>
+</ol>
+
+<h2>Method 2: From PowerShell or Command Prompt</h2>
+<pre>
+cd "C:\Users\Hariprasad\Videos\JAVA PROJECT"
+java -jar CollegeComplaint.jar --terminal
+</pre>
+
+<h2>Terminal Commands Available During Viva Demonstration</h2>
+<table>
+  <thead>
+    <tr>
+      <th style="width:15%">Command</th>
+      <th style="width:35%">Action</th>
+      <th style="width:50%">What the Teacher Sees</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>1</strong></td>
+      <td>View All Complaints Table</td>
+      <td>Full formatted ASCII table containing complaint ID, student name, department, category, status, and description.</td>
+    </tr>
+    <tr>
+      <td><strong>2</strong></td>
+      <td>Filter by Status</td>
+      <td>Filter grievances by <em>Pending</em>, <em>In Progress</em>, or <em>Resolved</em> directly in terminal.</td>
+    </tr>
+    <tr>
+      <td><strong>3</strong></td>
+      <td>View Registered Students</td>
+      <td>ASCII table of student IDs, names, departments, emails, and contact phone numbers.</td>
+    </tr>
+    <tr>
+      <td><strong>4</strong></td>
+      <td>Submit Complaint via Terminal</td>
+      <td>Interactive prompts to enter student ID, category, and issue. Executes SQL <code>INSERT</code> via <code>PreparedStatement</code>.</td>
+    </tr>
+    <tr>
+      <td><strong>5</strong></td>
+      <td>Update Status via Terminal</td>
+      <td>Prompts for complaint ID, new status, and remarks. Executes SQL <code>UPDATE</code> in MySQL.</td>
+    </tr>
+    <tr>
+      <td><strong>6</strong></td>
+      <td>Database Metrics Overview</td>
+      <td>Live SQL <code>COUNT(*)</code> calculations printed directly to the console.</td>
+    </tr>
+    <tr>
+      <td><strong>7</strong></td>
+      <td>Open Web GUI</td>
+      <td>Launches browser at <code>http://localhost:3000</code> while keeping the console running.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Live Real-Time JDBC Logging in Terminal</h2>
+<p>When the web GUI is used simultaneously, every action streams live logs into the terminal window:</p>
+<pre>
+[21:12:55] [JDBC LOGIN   ] SUCCESS: Student 'Sneha S' (sneha@example.com) authenticated.
+[21:12:55] [JDBC SELECT  ] Fetched 50 complaints from MySQL for Dashboard view.
+[21:13:10] [JDBC INSERT  ] New complaint filed! ID #51 | Student ID: 2 | Category: Academic
+[21:13:25] [JDBC UPDATE  ] Complaint #51 status updated to 'Resolved' | Remarks: 'Fixed'
+</pre>
+
+<h2>Common Lab Exam & Viva Questions</h2>
+<ul>
+  <li><strong>Q: Which Java packages are used?</strong><br>
+  <em>A:</em> <code>java.sql.*</code> (<code>Connection</code>, <code>PreparedStatement</code>, <code>Statement</code>, <code>ResultSet</code>, <code>DriverManager</code>).</li>
+  <li><strong>Q: How are SQL injection attacks prevented?</strong><br>
+  <em>A:</em> By using parameterized queries with <code>PreparedStatement</code> and <code>?</code> placeholders.</li>
+  <li><strong>Q: Where is MySQL Connector/J located?</strong><br>
+  <em>A:</em> Inside <code>lib/mysql-connector-j.jar</code>, specified in <code>manifest.txt</code>.</li>
+</ul>
+
+</body>
+</html>

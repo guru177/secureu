@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>SecureU — Local Web View Setup & Execution Guide</title>
+<style>
+body { font-family: Calibri, Arial, sans-serif; line-height: 1.5; color: #1e293b; margin: 35px; }
+h1 { color: #0f172a; border-bottom: 2px solid #0f172a; padding-bottom: 8px; font-size: 24pt; }
+h2 { color: #1e293b; border-bottom: 1px solid #cbd5e1; padding-bottom: 5px; margin-top: 24px; font-size: 15pt; }
+code, pre { font-family: Consolas, 'Courier New', monospace; background: #f1f5f9; padding: 3px 6px; border-radius: 4px; }
+pre { background: #0f172a; color: #f8fafc; padding: 14px; border-radius: 6px; overflow-x: auto; font-size: 10pt; }
+table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+th, td { border: 1px solid #cbd5e1; padding: 8px 12px; text-align: left; }
+th { background: #f8fafc; color: #0f172a; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<h1>SecureU — Local Web View Setup & Execution Guide</h1>
+<p><strong>Course:</strong> Java Programming / DBMS Lab &bull; <strong>Local Address:</strong> <code>http://localhost:3000</code></p>
+
+<h2>Method 1: 1-Click Web Launcher (Recommended)</h2>
+<p>In your project folder, double-click: <strong><code>start-browser-app.bat</code></strong>.</p>
+<ul>
+  <li>Automatically frees port 3000 from old processes.</li>
+  <li>Starts the lightweight local server (<code>local-server.js</code>).</li>
+  <li>Automatically launches your default browser at <code>http://localhost:3000</code>.</li>
+</ul>
+
+<h2>Method 2: Via the Java Application (Dual Mode)</h2>
+<ol>
+  <li>Launch the Java application using <strong><code>Launch-CollegeComplaint.bat</code></strong> or <strong><code>Launch-Terminal-Console.bat</code></strong>.</li>
+  <li>Open any browser and navigate to: <code>http://localhost:3000</code>.</li>
+  <li>Java's built-in HTTP server serves the web portal directly, connected to MySQL JDBC with real-time terminal query logging!</li>
+</ol>
+
+<h2>Method 3: From PowerShell or Command Prompt</h2>
+<pre>
+cd "C:\Users\Hariprasad\Videos\JAVA PROJECT"
+node local-server.js
+</pre>
+
+<h2>Testing Responsive Mobile View Locally</h2>
+<ol>
+  <li>Open <code>http://localhost:3000</code> in Google Chrome or Microsoft Edge.</li>
+  <li>Press <strong>F12</strong> to open Developer Tools.</li>
+  <li>Press <strong>Ctrl + Shift + M</strong> to toggle the Device Toolbar.</li>
+  <li>Select <strong>iPhone 14 Pro</strong> or <strong>iPad Air</strong> to view the mobile-optimized layout.</li>
+</ol>
+
+</body>
+</html>

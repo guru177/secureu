@@ -65,10 +65,16 @@ const server = http.createServer((req, res) => {
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`=======================================================`);
-  console.log(`🚀 CollegeComplaint Web Application is running!`);
-  console.log(`🌐 Local URL: http://localhost:${PORT}`);
-  console.log(`📁 Serving directory: ${WEB_DIR}`);
-  console.log(`=======================================================`);
-});
+module.exports = (req, res) => {
+  server.emit('request', req, res);
+};
+
+if (!process.env.VERCEL) {
+  server.listen(PORT, () => {
+    console.log(`=======================================================`);
+    console.log(`🚀 SecureU Web Application is running!`);
+    console.log(`🌐 Local URL: http://localhost:${PORT}`);
+    console.log(`📁 Serving directory: ${WEB_DIR}`);
+    console.log(`=======================================================`);
+  });
+}

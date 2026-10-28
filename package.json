@@ -1,18 +1,16 @@
 {
-  "name": "college-complaint-web",
+  "name": "secureu-web",
   "version": "1.0.0",
-  "description": "Browser-based College Complaint Management & Redressal System ported from Java + MySQL",
-  "main": "server.js",
+  "description": "SecureU - Student Safety & Grievance Redressal Portal",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "start": "node server.js"
   },
   "keywords": [
     "grievance",
     "college",
-    "complaint",
+    "safety",
     "portal"
   ],
-  "author": "CollegeComplaint",
+  "author": "SecureU",
   "license": "ISC"
 }

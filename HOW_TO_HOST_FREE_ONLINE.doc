@@ -1,0 +1,105 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+<meta charset="utf-8">
+<title>SecureU — Free 24/7 Online Hosting Guide</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    line-height: 1.6;
+    color: #1a1a1a;
+    padding: 30px;
+    background-color: #ffffff;
+  }
+  h1 {
+    font-size: 22pt;
+    color: #0a0a0a;
+    border-bottom: 2px solid #0a0a0a;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+  }
+  h2 {
+    font-size: 15pt;
+    color: #171717;
+    margin-top: 22px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #e5e5e5;
+    padding-bottom: 4px;
+  }
+  p, li {
+    font-size: 10.5pt;
+    color: #333333;
+  }
+  .callout {
+    background-color: #f8fafc;
+    border-left: 4px solid #0f172a;
+    padding: 12px 16px;
+    margin: 15px 0;
+    border-radius: 0 6px 6px 0;
+  }
+  code {
+    font-family: 'Consolas', monospace;
+    background-color: #f1f1f2;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 9.5pt;
+  }
+  pre {
+    background-color: #18181b;
+    color: #fafafa;
+    padding: 12px;
+    border-radius: 6px;
+    font-family: 'Consolas', monospace;
+    font-size: 9.5pt;
+  }
+</style>
+</head>
+<body>
+
+<h1>SecureU — Free 24/7 Online Hosting Guide</h1>
+<p><strong>Purpose:</strong> How to get a free, permanent public HTTPS link for your teacher and external evaluation.</p>
+<hr/>
+
+<h2>Method 1: Netlify Drop (Fastest — 15 Seconds, Zero Setup)</h2>
+<div class="callout">
+  <p><strong>Steps:</strong></p>
+  <ol>
+    <li>Open your browser and navigate to: <a href="https://app.netlify.com/drop">https://app.netlify.com/drop</a></li>
+    <li>In File Explorer, open your project folder: <code>C:\Users\Hariprasad\Videos\JAVA PROJECT</code></li>
+    <li>Locate the <strong><code>web</code></strong> folder.</li>
+    <li><strong>Drag and drop the <code>web</code> folder</strong> into the upload area on Netlify Drop.</li>
+    <li>Your site is instantly live! Netlify will display your permanent public URL (e.g., <code>https://secureu-project.netlify.app</code>).</li>
+    <li>Send this link directly to your teacher.</li>
+  </ol>
+</div>
+
+<h2>Method 2: Vercel (Professional Cloud Hosting)</h2>
+<div class="callout">
+  <ol>
+    <li>Push your project to GitHub.</li>
+    <li>Log into <a href="https://vercel.com">https://vercel.com</a> with your GitHub account.</li>
+    <li>Click <strong>Add New Project</strong>, select your repository.</li>
+    <li>The pre-configured <code>vercel.json</code> will automatically route the site. Click <strong>Deploy</strong>.</li>
+    <li>Your live link will be generated: <code>https://secureu.vercel.app</code>.</li>
+  </ol>
+</div>
+
+<h2>Template Message to Send Your Teacher</h2>
+<div class="callout">
+  <p><strong>Subject:</strong> Java Project / DBMS Lab Submission — SecureU Portal Demo</p>
+  <p>Dear Professor,</p>
+  <p>Here is the live demo link for our project <strong>SecureU — Student Safety & Grievance Redressal Portal</strong>:</p>
+  <p><strong>Live Demo Link:</strong> <code>https://your-app-name.netlify.app</code></p>
+  <p><strong>Demo Test Accounts:</strong></p>
+  <ul>
+    <li><strong>Student Login:</strong> Click <em>"Abhinav (Student)"</em> on the login card to file complaints with live image attachments and view the resolution timeline.</li>
+    <li><strong>Warden Login:</strong> Click <em>"Priya (Warden)"</em> to review hostel complaints, update status, and view attachments.</li>
+    <li><strong>HOD Login:</strong> Click <em>"Suresh (HOD)"</em> to view department complaints and resolution analytics charts.</li>
+    <li><strong>Database Inspector:</strong> Click the <em>"SQL Database"</em> button in the top navigation to view the live relational tables.</li>
+  </ul>
+</div>
+
+<hr/>
+<p style="text-align: center; color: #737373; font-size: 9pt;">SecureU — Student Safety & Grievance Redressal Portal</p>
+
+</body>
+</html>

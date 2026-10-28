@@ -1,0 +1,14 @@
+# Build and class files
+bin/
+*.class
+
+# Log files
+*.log
+out.log
+err.log
+
+# IDE & System files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

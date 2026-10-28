@@ -1,0 +1,4 @@
+Manifest-Version: 1.0
+Main-Class: collegecomplaint.App
+Class-Path: lib/mysql-connector-j.jar
+

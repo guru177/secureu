@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecureU — Student Safety &amp; Grievance Redressal Portal</title>
+  <meta name="description" content="SecureU: A comprehensive student safety, grievance submission, and administrative redressal tracking system.">
+  
+  <!-- Modern Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ==========================================================================
+       Navigation Bar
+       ========================================================================== -->
+  <nav class="navbar">
+    <div class="nav-brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <path d="M9 12l2 2 4-4"/>
+        </svg>
+      </div>
+      <div class="brand-info">
+        <h1>SecureU</h1>
+        <span>Student Safety &amp; Grievance Redressal</span>
+      </div>
+    </div>
+
+    <div class="nav-actions">
+      <!-- Database Inspector Quick Trigger -->
+      <button class="btn btn-secondary btn-sm" id="nav-db-btn" title="Inspect relational tables (Students, Admin, Complaints)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+          <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+          <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+        </svg>
+        SQL Database
+      </button>
+
+      <!-- Active User Profile Badge -->
+      <div class="user-badge" id="nav-user-badge" style="display: none;">
+        <div class="user-avatar" id="nav-avatar">U</div>
+        <div class="user-details">
+          <span class="user-name" id="nav-user-name">User</span>
+          <span class="user-role" id="nav-user-role">Student</span>
+        </div>
+      </div>
+
+      <!-- Logout Button -->
+      <button class="btn btn-outline btn-sm" id="nav-logout-btn" style="display: none;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        Sign Out
+      </button>
+    </div>
+  </nav>
+
+  <!-- ==========================================================================
+       Main Container
+       ========================================================================== -->
+  <main class="main-container">
+
+    <!-- VIEW 1: LOGIN VIEW (Redesigned to match reference image) -->
+    <section id="login-view" class="view active">
+      <div class="login-wrapper-modern">
+        <!-- Left Side: SecureU Hero Card with generated image and branding -->
+        <div class="login-hero-card">
+          <img src="hero_secure_u.jpg" alt="SecureU — Student Safety &amp; Grievance Redressal" class="hero-bg-img" onerror="this.onerror=null; this.src='hero_grievance.jpg';">
+          <div class="hero-gradient-overlay"></div>
+          <div class="hero-top-badge">
+            <span class="hero-brand-pill">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                <path d="M9 12l2 2 4-4"/>
+              </svg>
+              SecureU
+            </span>
+            <span class="hero-tagline">Student Safety &amp; Grievance System</span>
+          </div>
+          <div class="hero-overlay-text">
+            <h2>VOICE.<br>RESOLVE. EMPOWER.</h2>
+          </div>
+        </div>
+
+        <!-- Right Side: Clean White Login Card -->
+        <div class="login-form-card">
+          <button type="button" class="login-floating-db-btn" onclick="document.getElementById('nav-db-btn').click()" title="Inspect Relational MySQL Database">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+            SQL Database
+          </button>
+
+          <div class="login-form-inner">
+            <div class="login-brand-header">
+              <div class="brand-avatar-badge">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  <path d="M9 12l2 2 4-4"/>
+                </svg>
+              </div>
+              <span class="login-brand-title">SECURE U</span>
+            </div>
+
+            <h2 class="login-main-title">WELCOME BACK</h2>
+            <p class="login-sub-title">Enter your email and password to access your account</p>
+
+            <!-- Role Switcher -->
+            <div class="role-switcher-modern">
+              <button type="button" class="role-tab-btn active" id="role-student-btn">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+                Student
+              </button>
+              <button type="button" class="role-tab-btn" id="role-admin-btn">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                Admin / Warden
+              </button>
+            </div>
+
+          <form id="login-form">
+            <div class="modern-input-group">
+              <label class="modern-label" for="login-email">Email</label>
+              <input type="email" id="login-email" class="modern-input" placeholder="Enter your email" required value="abhinav@example.com">
+            </div>
+
+            <div class="modern-input-group">
+              <label class="modern-label" for="login-password">Password</label>
+              <input type="password" id="login-password" class="modern-input" placeholder="Enter your password" required value="student@123">
+            </div>
+
+            <div class="login-extra-row">
+              <label class="remember-checkbox-label">
+                <input type="checkbox" checked>
+                <span>Remember me</span>
+              </label>
+              <a href="javascript:void(0)" class="forgot-link">Forgot Password</a>
+            </div>
+
+            <button type="submit" class="btn-signin-black" id="login-submit-btn">
+              Sign In
+            </button>
+          </form>
+
+          <!-- 1-Click Demo Accounts -->
+          <div class="modern-demo-container">
+            <span class="demo-sub-divider">1-CLICK DEMO ACCOUNTS</span>
+            <div class="demo-pills-row">
+              <button type="button" class="demo-pill-btn demo-btn-pill" data-role="student" data-email="abhinav@example.com" data-password="student@123">
+                <span class="pill-dot" style="background: #6366f1;"></span>
+                Abhinav (Student)
+              </button>
+              <button type="button" class="demo-pill-btn demo-btn-pill" data-role="student" data-email="sneha@example.com" data-password="student@123">
+                <span class="pill-dot" style="background: #06b6d4;"></span>
+                Sneha (Student)
+              </button>
+              <button type="button" class="demo-pill-btn demo-btn-pill" data-role="admin" data-email="warden@example.com" data-password="admin@123">
+                <span class="pill-dot" style="background: #f59e0b;"></span>
+                Priya (Warden)
+              </button>
+              <button type="button" class="demo-pill-btn demo-btn-pill" data-role="admin" data-email="hod@example.com" data-password="admin@123">
+                <span class="pill-dot" style="background: #10b981;"></span>
+                Suresh (HOD)
+              </button>
+            </div>
+          </div>
+
+          <div class="signup-prompt-row">
+            Don't have an account? <a href="javascript:void(0)">Sign up</a>
+          </div>
+        </div> <!-- end login-form-inner -->
+      </div> <!-- end login-form-card -->
+    </div> <!-- end login-wrapper-modern -->
+  </section>
+
+    <!-- VIEW 2: STUDENT PORTAL (Corresponds to App.Student) -->
+    <section id="student-view" class="view">
+      <div class="admin-header-box">
+        <div class="admin-top-row">
+          <div class="admin-top-left">
+            <h2 id="student-welcome-title">Student Dashboard</h2>
+            <button class="btn btn-primary btn-sm" id="student-file-btn" onclick="openModal('student-file-modal')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              File Complaint
+            </button>
+            <button class="btn btn-outline btn-sm" id="student-track-btn" onclick="openModal('student-track-modal')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              Track Complaint
+            </button>
+            <button class="btn btn-outline btn-sm" id="student-refresh-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+              Refresh Data
+            </button>
+          </div>
+        </div>
+        <p class="admin-subtitle-row">
+          Department: <span id="student-dept-tag" class="category-tag">CSE</span> — Submit complaints and track resolution progress.
+        </p>
+      </div>
+
+      <!-- Quick Metrics -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-label">Total Filed</span>
+            <div class="stat-icon stat-icon-total">📑</div>
+          </div>
+          <div class="stat-value" id="student-stat-total">0</div>
+          <div class="stat-desc">Complaints submitted by you</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-label">Pending</span>
+            <div class="stat-icon stat-icon-pending">⏳</div>
+          </div>
+          <div class="stat-value" id="student-stat-pending">0</div>
+          <div class="stat-desc">Awaiting initial administrative review</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-label">In Progress</span>
+            <div class="stat-icon stat-icon-progress">⚙️</div>
+          </div>
+          <div class="stat-value" id="student-stat-progress">0</div>
+          <div class="stat-desc">Assigned to maintenance/staff</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <span class="stat-label">Resolved</span>
+            <div class="stat-icon stat-icon-resolved">✅</div>
+          </div>
+          <div class="stat-value" id="student-stat-resolved">0</div>
+          <div class="stat-desc">Successfully addressed &amp; closed</div>
+        </div>
+      </div>
+
+      <!-- My Complaints List -->
+      <div class="table-wrapper">
+        <div class="table-toolbar">
+          <h3 style="font-size: 1rem; font-weight: 700;">My Filed Complaints</h3>
+          <div class="search-input-group">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="student-search-input" placeholder="Search by ID, category, keyword...">
+          </div>
+        </div>
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Category</th>
+              <th>Description</th>
+              <th>Status</th>
+              <th>Date Filed</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="student-complaints-tbody">
+            <!-- Rendered dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- VIEW 3: ADMINISTRATOR PORTAL (Corresponds to App.Admin) -->
+    <section id="admin-view" class="view">
+      <div class="admin-header-box">
+        <div class="admin-top-row">
+          <div class="admin-top-left">
+            <h2 id="admin-welcome-title">Good evening 👋</h2>
+            <div class="scope-toggle" id="admin-scope-toggle">
+              <button type="button" class="scope-btn active" data-scope="mine" id="scope-mine-btn">My Jurisdiction</button>
+              <button type="button" class="scope-btn" data-scope="all" id="scope-all-btn">All Complaints</button>
+            </div>
+            <button class="btn btn-outline btn-sm" id="admin-refresh-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+              Refresh Data
+            </button>
+          </div>
+          <div class="admin-top-right">
+            <span class="last-updated" id="admin-last-updated">Last updated: —</span>
+          </div>
+        </div>
+        <p class="admin-subtitle-row">
+          <span id="admin-role-tag" class="category-tag">Warden</span>
+          <span id="admin-subtitle">Here's an overview of student grievances and their current status.</span>
+        </p>
+      </div>
+
+      <!-- KPI Cards with sparklines -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <div class="kpi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+            <div>
+              <div class="kpi-label">Total Grievances</div>
+              <div class="kpi-value" id="admin-stat-total">0</div>
+            </div>
+          </div>
+          <div class="kpi-bottom">
+            <div class="kpi-delta" id="admin-delta-total">—</div>
+            <svg class="kpi-spark" id="admin-spark-total" viewBox="0 0 100 32" preserveAspectRatio="none"></svg>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <div class="kpi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 22h14M5 2h14M17 22v-4.17a2 2 0 0 0-.59-1.42L12 12l-4.41 4.41A2 2 0 0 0 7 17.83V22M7 2v4.17a2 2 0 0 0 .59 1.42L12 12l4.41-4.41A2 2 0 0 0 17 6.17V2"/></svg></div>
+            <div>
+              <div class="kpi-label">Pending Action</div>
+              <div class="kpi-value" id="admin-stat-pending">0</div>
+            </div>
+          </div>
+          <div class="kpi-bottom">
+            <div class="kpi-delta" id="admin-delta-pending">—</div>
+            <svg class="kpi-spark" id="admin-spark-pending" viewBox="0 0 100 32" preserveAspectRatio="none"></svg>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <div class="kpi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+            <div>
+              <div class="kpi-label">In Progress</div>
+              <div class="kpi-value" id="admin-stat-progress">0</div>
+            </div>
+          </div>
+          <div class="kpi-bottom">
+            <div class="kpi-delta" id="admin-delta-progress">—</div>
+            <svg class="kpi-spark" id="admin-spark-progress" viewBox="0 0 100 32" preserveAspectRatio="none"></svg>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <div class="kpi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+            <div>
+              <div class="kpi-label">Resolved</div>
+              <div class="kpi-value" id="admin-stat-resolved">0</div>
+            </div>
+          </div>
+          <div class="kpi-bottom">
+            <div class="kpi-delta" id="admin-delta-resolved">—</div>
+            <svg class="kpi-spark" id="admin-spark-resolved" viewBox="0 0 100 32" preserveAspectRatio="none"></svg>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-top">
+            <div class="kpi-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+            <div>
+              <div class="kpi-label">Resolution Rate</div>
+              <div class="kpi-value" id="admin-stat-rate">0%</div>
+            </div>
+          </div>
+          <div class="kpi-bottom">
+            <div class="kpi-delta" id="admin-delta-rate">—</div>
+            <svg class="kpi-spark" id="admin-spark-rate" viewBox="0 0 100 32" preserveAspectRatio="none"></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analytics Charts -->
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <h3>Grievance Trends</h3>
+            <select id="trend-range-select" class="form-select chart-select">
+              <option value="3">Last 3 Months</option>
+              <option value="6" selected>Last 6 Months</option>
+              <option value="12">Last 12 Months</option>
+            </select>
+          </div>
+          <div class="chart-legend">
+            <span><i class="lg-line lg-solid"></i>Total</span>
+            <span><i class="lg-line lg-gray"></i>Resolved</span>
+            <span><i class="lg-line lg-dash"></i>Pending</span>
+          </div>
+          <div class="chart-body" id="chart-trend"></div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <h3>Complaint Status Distribution</h3>
+          </div>
+          <div class="donut-wrap">
+            <div class="chart-body donut-body" id="chart-donut"></div>
+            <div class="donut-legend" id="chart-donut-legend"></div>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <h3>Complaints by Category</h3>
+            <select id="category-metric-select" class="form-select chart-select">
+              <option value="all">All Statuses</option>
+              <option value="open">Open Only</option>
+              <option value="Resolved">Resolved Only</option>
+            </select>
+          </div>
+          <div class="cat-bars" id="chart-category"></div>
+        </div>
+      </div>
+
+      <!-- Admin Table & Filter Toolbar -->
+      <div class="table-wrapper">
+        <div class="table-toolbar">
+          <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
+            <!-- Category Filter -->
+            <select id="admin-filter-category" class="form-select toolbar-select">
+              <option value="ALL">All Categories</option>
+              <option value="Academic">Academic</option>
+              <option value="Hostel">Hostel</option>
+              <option value="Food">Food</option>
+              <option value="Physical Harassment">Physical Harassment</option>
+              <option value="Verbal Harassment">Verbal Harassment</option>
+              <option value="Other">Other</option>
+            </select>
+
+            <!-- Status Filter -->
+            <select id="admin-filter-status" class="form-select toolbar-select">
+              <option value="ALL">All Statuses</option>
+              <option value="Pending">Pending</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Resolved">Resolved</option>
+            </select>
+
+            <!-- Department Filter -->
+            <select id="admin-filter-dept" class="form-select toolbar-select">
+              <option value="ALL">All Departments</option>
+              <option value="CSE">CSE</option>
+              <option value="ECE">ECE</option>
+              <option value="EEE">EEE</option>
+              <option value="IT">IT</option>
+              <option value="MECH">MECH</option>
+              <option value="CIVIL">CIVIL</option>
+            </select>
+          </div>
+
+          <div class="search-input-group">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="admin-search-input" placeholder="Search by student, ID, description...">
+          </div>
+        </div>
+
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Student &amp; Dept</th>
+              <th>Category</th>
+              <th>Description</th>
+              <th>Status</th>
+              <th>Date Filed</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="admin-complaints-tbody">
+            <!-- Rendered dynamically -->
+          </tbody>
+        </table>
+        <div class="table-footer" id="admin-pagination"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==========================================================================
+       MODAL: Student File Complaint Popup
+       ========================================================================== -->
+  <div class="modal-overlay" id="student-file-modal">
+    <div class="modal-card" style="max-width: 680px;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <div class="kpi-icon" style="width: 34px; height: 34px; border-radius: 8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          </div>
+          <div>
+            <h3>File a New Grievance</h3>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">Fill in the details. Your complaint will route to the proper authority.</span>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeModal('student-file-modal')">✕</button>
+      </div>
+
+      <form id="student-complaint-form">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="complaint-category">Grievance Category</label>
+            <select id="complaint-category" class="form-select" required>
+              <option value="Academic">Academic (Lectures, Labs, Exams, Grades)</option>
+              <option value="Hostel">Hostel (Rooms, Electricity, Plumbing, Cleanliness)</option>
+              <option value="Food">Food (Mess quality, Canteen hygiene, Water)</option>
+              <option value="Physical Harassment">Physical Harassment / Ragging</option>
+              <option value="Verbal Harassment">Verbal Harassment / Bullying</option>
+              <option value="Other">Other Issues</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="complaint-desc">Detailed Description</label>
+            <textarea id="complaint-desc" class="form-textarea" placeholder="Please describe the issue thoroughly with dates, locations, or equipment details..." required></textarea>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Evidence File Attachment (Optional)</label>
+              <label class="file-upload-box" for="complaint-evidence-file">
+                <div class="file-upload-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                </div>
+                <div style="font-size: 0.85rem; font-weight: 600;">Choose evidence file or drop here</div>
+                <div id="file-upload-name" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">No file chosen</div>
+                <input type="file" id="complaint-evidence-file" style="display: none;">
+              </label>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="complaint-evidence-text">Or Specify Evidence Filename</label>
+              <input type="text" id="complaint-evidence-text" class="form-control" placeholder="e.g. damaged_desk.jpg or invoice.pdf">
+              <span style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.3rem;">
+                Matches original schema where evidence is referenced as a filename string.
+              </span>
+            </div>
+          </div>
+
+          <!-- Live Attachment Preview at Submission Time -->
+          <div id="submission-preview-box" style="display: none;"></div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('student-file-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary" style="padding: 0.65rem 1.75rem;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            Submit Official Complaint
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL: Student Track Grievance Status Popup
+       ========================================================================== -->
+  <div class="modal-overlay" id="student-track-modal">
+    <div class="modal-card" style="max-width: 680px;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <div class="kpi-icon" style="width: 34px; height: 34px; border-radius: 8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          </div>
+          <div>
+            <h3>Live Grievance Tracker</h3>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">Enter complaint ID to view timeline and administrative remarks</span>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeModal('student-track-modal')">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="tracker-search-box" style="margin-bottom: 1.25rem;">
+          <input type="number" id="track-complaint-id" class="form-control" placeholder="Enter Complaint ID (e.g. 39)" style="flex: 1;">
+          <button class="btn btn-primary" id="track-submit-btn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            Find Status
+          </button>
+        </div>
+
+        <div id="tracker-empty-prompt" style="text-align: center; color: var(--text-muted); padding: 1.5rem 0;">
+          Enter a complaint ID above and click Find Status.
+        </div>
+
+        <!-- Result Container -->
+        <div id="tracker-result-card" style="display: none;">
+          <div class="tracker-info-card" style="margin-bottom: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+              <span class="tracker-id" id="track-disp-id">#101</span>
+              <span class="category-tag" id="track-disp-category">Category</span>
+            </div>
+            <p style="font-size: 0.92rem; color: var(--text-primary); margin-bottom: 0.85rem;" id="track-disp-desc">Description</p>
+            
+            <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: center;">
+              <div>Filed Date: <strong id="track-disp-date" style="color: var(--text-secondary);">2026-10-24</strong></div>
+              <div id="track-disp-evidence-wrap" style="display: flex; align-items: center; gap: 0.5rem;">
+                Evidence: <strong id="track-disp-evidence" style="color: var(--text-secondary);">None</strong>
+              </div>
+            </div>
+
+            <div id="track-disp-remarks-box" class="tracker-remarks-box" style="display: none;">
+              <span class="tracker-remarks-title">Official Administrative Remarks:</span>
+              <p id="track-disp-remarks" style="font-size: 0.88rem; margin: 0; line-height: 1.4;"></p>
+            </div>
+          </div>
+
+          <!-- Visual Progress Timeline -->
+          <div class="timeline-container">
+            <div class="timeline-step completed" id="step-submitted">
+              <div class="timeline-dot">✓</div>
+              <div class="timeline-content">
+                <h4>1. Complaint Lodged</h4>
+                <p>Received in official repository with timestamp.</p>
+              </div>
+            </div>
+            <div class="timeline-step" id="step-review">
+              <div class="timeline-dot">⚙</div>
+              <div class="timeline-content">
+                <h4>2. Action &amp; Investigation</h4>
+                <p id="review-step-text">Under Review by Warden / HOD.</p>
+              </div>
+            </div>
+            <div class="timeline-step" id="step-resolved">
+              <div class="timeline-dot">🏁</div>
+              <div class="timeline-content">
+                <h4>3. Redressal &amp; Closed</h4>
+                <p>Corrective measures completed with formal remarks documented.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('student-track-modal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 1: Admin Update Status & Remarks (App.Admin bottom panel)
+       ========================================================================== -->
+  <div class="modal-overlay" id="admin-update-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Update Complaint Redressal</h3>
+        <button class="modal-close-btn" onclick="closeModal('admin-update-modal')">✕</button>
+      </div>
+      <form id="admin-update-form">
+        <div class="modal-body">
+          <input type="hidden" id="modal-update-id">
+          
+          <div class="modal-info-card">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+              <span class="modal-complaint-id" id="modal-disp-id">#101</span>
+              <span class="category-tag" id="modal-disp-category">Category</span>
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+              Student: <strong id="modal-disp-student" style="color: var(--text-primary);">Abhinav U (CSE)</strong>
+            </div>
+            <p style="font-size: 0.88rem; color: var(--text-primary); margin-bottom: 0.5rem;" id="modal-disp-desc">Description</p>
+            <div id="modal-disp-evidence" class="modal-evidence-container">📎 None</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="modal-update-status">Redressal Status</label>
+            <select id="modal-update-status" class="form-select" required>
+              <option value="Pending">Pending (Not yet addressed)</option>
+              <option value="In Progress">In Progress (Action initiated / under repair)</option>
+              <option value="Resolved">Resolved (Addressed &amp; closed)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="modal-update-remarks">Official Remarks &amp; Feedback for Student</label>
+            <textarea id="modal-update-remarks" class="form-textarea" placeholder="Detail any action taken, contractor notes, or resolution outcome..."></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('admin-update-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+            Save Update (UPDATE complaints SET...)
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 2: SQL Relational Database Inspector & Tools
+       ========================================================================== -->
+  <div class="modal-overlay" id="db-inspector-modal">
+    <div class="modal-card" style="max-width: 900px;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <div style="color: #818cf8;">🗄️</div>
+          <div>
+            <h3>Relational Database Inspector</h3>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">Database: <code>CollegeComplaint</code></span>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeModal('db-inspector-modal')">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
+          This inspector shows the live state of tables corresponding to <a href="file:///c:/Users/Hariprasad/Videos/JAVA PROJECT/sql/CollegeComplaint.sql" target="_blank" style="color: #818cf8;">sql/CollegeComplaint.sql</a> and <a href="file:///c:/Users/Hariprasad/Videos/JAVA PROJECT/src/main/java/collegecomplaint/App.java" target="_blank" style="color: #818cf8;">App.java</a>.
+        </p>
+
+        <!-- Table 1: students -->
+        <h4 class="db-table-title"><span>👥</span> TABLE: students <code>(student_id PK, name, department, email UNIQUE, password, phone)</code></h4>
+        <div class="table-wrapper" style="margin-bottom: 1.5rem;">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>student_id</th>
+                <th>name</th>
+                <th>dept</th>
+                <th>email</th>
+                <th>password</th>
+                <th>phone</th>
+              </tr>
+            </thead>
+            <tbody id="db-students-tbody"></tbody>
+          </table>
+        </div>
+
+        <!-- Table 2: admin -->
+        <h4 class="db-table-title"><span>🛡️</span> TABLE: admin <code>(admin_id PK, name, role ENUM('Warden','HOD'), email UNIQUE, password)</code></h4>
+        <div class="table-wrapper" style="margin-bottom: 1.5rem;">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>admin_id</th>
+                <th>name</th>
+                <th>role</th>
+                <th>email</th>
+                <th>password</th>
+              </tr>
+            </thead>
+            <tbody id="db-admin-tbody"></tbody>
+          </table>
+        </div>
+
+        <!-- Table 3: complaints -->
+        <h4 class="db-table-title"><span>📋</span> TABLE: complaints <code>(complaint_id PK, student_id FK, category, description, evidence, status, date_filed, remarks)</code></h4>
+        <div class="table-wrapper">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>student_id</th>
+                <th>category</th>
+                <th>description</th>
+                <th>evidence</th>
+                <th>status</th>
+                <th>date</th>
+                <th>remarks</th>
+              </tr>
+            </thead>
+            <tbody id="db-complaints-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="justify-content: space-between;">
+        <button type="button" class="btn btn-danger btn-sm" id="db-reset-btn">
+          Reset to Original SQL Seed Data
+        </button>
+        <div style="display: flex; gap: 0.5rem;">
+          <button type="button" class="btn btn-secondary btn-sm" id="db-export-json-btn">
+            Export JSON
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="closeModal('db-inspector-modal')">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 3: Universal Evidence Attachment Viewer (Images, PDFs, Documents)
+       ========================================================================== -->
+  <div class="modal-overlay" id="attachment-preview-modal">
+    <div class="modal-card modal-attachment-card" style="max-width: 840px;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 0.65rem;">
+          <div class="kpi-icon" id="attachment-modal-icon" style="width: 36px; height: 36px; border-radius: 8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+          </div>
+          <div>
+            <h3 id="attachment-modal-title" style="font-size: 1.05rem; word-break: break-all;">Attachment Preview</h3>
+            <span id="attachment-modal-subtitle" style="font-size: 0.75rem; color: var(--text-muted);">Verified grievance supporting evidence</span>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <a id="attachment-download-btn" class="btn btn-outline btn-sm" download="evidence" target="_blank" title="Download original file">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Download
+          </a>
+          <button class="modal-close-btn" onclick="closeModal('attachment-preview-modal')">✕</button>
+        </div>
+      </div>
+
+      <div class="modal-body" id="attachment-modal-body" style="padding: 1.5rem; text-align: center; background: #0a0a0a05; min-height: 380px; display: flex; align-items: center; justify-content: center; overflow: auto; max-height: 70vh;">
+        <!-- Dynamically rendered image/pdf/doc -->
+      </div>
+
+      <div class="modal-footer" style="justify-content: space-between; align-items: center;">
+        <span id="attachment-meta-info" style="font-size: 0.78rem; color: var(--text-muted);">Format: Image</span>
+        <button type="button" class="btn btn-primary btn-sm" onclick="closeModal('attachment-preview-modal')">Close Preview</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,227 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+<meta charset="utf-8">
+<title>CollegeComplaint — Local Server Setup Guide</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    line-height: 1.6;
+    color: #1a1a1a;
+    padding: 30px;
+    background-color: #ffffff;
+  }
+  h1 {
+    font-size: 24pt;
+    color: #0a0a0a;
+    border-bottom: 2px solid #0a0a0a;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+  }
+  h2 {
+    font-size: 16pt;
+    color: #171717;
+    margin-top: 24px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #e5e5e5;
+    padding-bottom: 4px;
+  }
+  h3 {
+    font-size: 12pt;
+    color: #262626;
+    margin-top: 16px;
+    margin-bottom: 6px;
+  }
+  p, li {
+    font-size: 10.5pt;
+    color: #333333;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 15px 0;
+    font-size: 10pt;
+  }
+  th {
+    background-color: #f4f4f5;
+    color: #18181b;
+    font-weight: bold;
+    text-align: left;
+    padding: 10px 12px;
+    border: 1px solid #d4d4d8;
+  }
+  td {
+    padding: 9px 12px;
+    border: 1px solid #e4e4e7;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td {
+    background-color: #fafafa;
+  }
+  code {
+    font-family: 'Consolas', 'Courier New', monospace;
+    background-color: #f1f1f2;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-size: 9.5pt;
+    color: #09090b;
+  }
+  pre {
+    font-family: 'Consolas', 'Courier New', monospace;
+    background-color: #18181b;
+    color: #fafafa;
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 9.5pt;
+    overflow-x: auto;
+    margin: 12px 0;
+  }
+  .callout {
+    background-color: #f8fafc;
+    border-left: 4px solid #0f172a;
+    padding: 12px 16px;
+    margin: 15px 0;
+    border-radius: 0 6px 6px 0;
+  }
+</style>
+</head>
+<body>
+
+<h1>SecureU — Student Safety &amp; Grievance Redressal System</h1>
+<p><strong>Course / Purpose:</strong> Java Project / DBMS Lab Documentation</p>
+<p><strong>Architecture:</strong> Java Desktop Application (JDK 27) + MySQL JDBC + Native HTTP REST API + Responsive Web Interface</p>
+<hr/>
+
+<h2>1. System Requirements & Prerequisites</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Component</th>
+      <th>Required Version</th>
+      <th>Default Path / Port</th>
+      <th>Status Check</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Java Development Kit (JDK)</strong></td>
+      <td>JDK 17, 21, or 27</td>
+      <td><code>C:\Program Files\Java\jdk-27.0.1.0.3\bin</code></td>
+      <td><code>& "C:\Program Files\Java\jdk-27.0.1.0.3\bin\java.exe" -version</code></td>
+    </tr>
+    <tr>
+      <td><strong>MySQL Server</strong></td>
+      <td>MySQL 5.7+ / 8.0+ (via XAMPP)</td>
+      <td>Port <code>3306</code></td>
+      <td>Check XAMPP Control Panel (Green status)</td>
+    </tr>
+    <tr>
+      <td><strong>Web Browser</strong></td>
+      <td>Chrome, Edge, Firefox, Brave</td>
+      <td><code>http://localhost:3000</code></td>
+      <td>Any modern HTML5 browser</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>2. Step-by-Step Instructions to Start Local Server</h2>
+
+<div class="callout">
+  <strong>Step 1: Start MySQL Database (XAMPP)</strong>
+  <ol>
+    <li>Open <strong>XAMPP Control Panel</strong> on your computer.</li>
+    <li>Click the <strong>Start</strong> button next to <strong>MySQL</strong>.</li>
+    <li>Ensure the MySQL module shows a green background with port <strong>3306</strong> active.</li>
+    <li><em>(First-time only)</em>: Open <a href="http://localhost/phpmyadmin">http://localhost/phpmyadmin</a> in your browser. If the database <code>CollegeComplaint</code> is not created yet, import the SQL script located at <code>sql/CollegeComplaint.sql</code>. (The Java backend also automatically verifies and seeds sample tables if needed).</li>
+  </ol>
+</div>
+
+<div class="callout">
+  <strong>Step 2: Launch the Java Server</strong>
+  <p>Choose <strong>ONE</strong> of the following options:</p>
+  <ul>
+    <li><strong>Option A (One-Click Launcher - Recommended):</strong><br>
+      In the project folder, simply double-click <strong><code>Launch-CollegeComplaint.bat</code></strong>.<br>
+      <em>Note: It automatically terminates any old background process holding port 3000 and launches the application cleanly.</em>
+    </li>
+    <li><strong>Option B (PowerShell Terminal):</strong><br>
+      If <code>java</code> is not recognized in your terminal, run with the full path:
+      <pre>& "C:\Program Files\Java\jdk-27.0.1.0.3\bin\java.exe" -jar CollegeComplaint.jar</pre>
+    </li>
+    <li><strong>Option C (Alternative Node.js Server):</strong><br>
+      If PowerShell blocks <code>npm.ps1</code> script execution, run <code>node server.js</code> or <code>npm.cmd start</code>:
+      <pre>node server.js</pre>
+    </li>
+  </ul>
+</div>
+
+<div class="callout">
+  <strong>Step 3: Open the Web Portal in Your Browser</strong>
+  <p>Navigate to:</p>
+  <pre>http://localhost:3000</pre>
+</div>
+
+<h2>3. Pre-Seeded Login Credentials</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Role</th>
+      <th>Email</th>
+      <th>Password</th>
+      <th>Core Permissions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Student</strong></td>
+      <td><code>abhinav@example.com</code></td>
+      <td><code>student@123</code></td>
+      <td>File grievances, attach evidence files (PNG, JPG, PDF, DOC), preview files in real-time, track grievance status lifecycle.</td>
+    </tr>
+    <tr>
+      <td><strong>Warden</strong></td>
+      <td><code>warden@example.com</code></td>
+      <td><code>warden@123</code></td>
+      <td>Hostel grievance management, update status (Pending / Under Review / Resolved), add redressal remarks, preview attached evidence.</td>
+    </tr>
+    <tr>
+      <td><strong>HOD</strong></td>
+      <td><code>hod.cse@example.com</code></td>
+      <td><code>hod@123</code></td>
+      <td>Academic and departmental grievance oversight, view resolution analytics charts, update complaints, review evidence.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>4. Solutions to Common Terminal Errors</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Terminal Error</th>
+      <th>Why It Happens</th>
+      <th>Exact Fix</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong><code>Address already in use: bind</code></strong></td>
+      <td>A previous Java server instance was still running on port 3000.</td>
+      <td>Double-click <code>Launch-CollegeComplaint.bat</code> (auto-cleans port 3000) or run <code>taskkill /F /IM java.exe</code>.</td>
+    </tr>
+    <tr>
+      <td><strong><code>The term 'java' is not recognized</code></strong></td>
+      <td>The current terminal session was opened before PATH was refreshed.</td>
+      <td>Run: <code>& "C:\Program Files\Java\jdk-27.0.1.0.3\bin\java.exe" -jar CollegeComplaint.jar</code></td>
+    </tr>
+    <tr>
+      <td><strong><code>npm.ps1 cannot be loaded because running scripts is disabled</code></strong></td>
+      <td>Windows PowerShell restricts <code>.ps1</code> script execution by default.</td>
+      <td>Run: <code>node server.js</code> or <code>npm.cmd start</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<hr/>
+<p style="text-align: center; color: #737373; font-size: 9pt;">CollegeComplaint — Grievance Redressal Portal • Generated Documentation</p>
+
+</body>
+</html>

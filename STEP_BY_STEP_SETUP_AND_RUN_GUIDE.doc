@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>SecureU — Step-by-Step Setup & Execution Guide</title>
+<style>
+body { font-family: Calibri, Arial, sans-serif; line-height: 1.5; color: #1e293b; margin: 35px; }
+h1 { color: #0f172a; border-bottom: 2px solid #0f172a; padding-bottom: 8px; font-size: 24pt; }
+h2 { color: #1e293b; border-bottom: 1px solid #cbd5e1; padding-bottom: 5px; margin-top: 24px; font-size: 15pt; }
+h3 { color: #334155; margin-top: 18px; font-size: 12pt; }
+code, pre { font-family: Consolas, 'Courier New', monospace; background: #f1f5f9; padding: 3px 6px; border-radius: 4px; }
+pre { background: #0f172a; color: #f8fafc; padding: 14px; border-radius: 6px; overflow-x: auto; font-size: 10pt; line-height: 1.4; }
+table { border-collapse: collapse; width: 100%; margin: 15px 0; }
+th, td { border: 1px solid #cbd5e1; padding: 8px 12px; text-align: left; }
+th { background: #f8fafc; color: #0f172a; font-weight: bold; }
+.badge { display: inline-block; background: #0f172a; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 9pt; }
+.tip { background: #eff6ff; border-left: 4px solid #2563eb; padding: 12px 16px; margin: 15px 0; border-radius: 0 4px 4px 0; }
+</style>
+</head>
+<body>
+
+<h1>SecureU — Step-by-Step Setup & Execution Guide</h1>
+<p><strong>Course:</strong> Java Programming / DBMS Lab &bull; <strong>Tech Stack:</strong> 100% Pure Java Swing (JFrame) + MySQL JDBC</p>
+
+<h2>1. System Prerequisites</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Component</th>
+      <th>Required Version</th>
+      <th>System Location</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Java JDK</strong></td>
+      <td>JDK 17, 21, or 27</td>
+      <td><code>C:\Program Files\Java\jdk-27.0.1.0.3\bin\java.exe</code></td>
+    </tr>
+    <tr>
+      <td><strong>MySQL Server</strong></td>
+      <td>XAMPP MySQL or MySQL 8.x</td>
+      <td>Port 3306 (<code>http://localhost/phpmyadmin</code>)</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>2. MySQL Database Setup (XAMPP)</h2>
+<ol>
+  <li><strong>Start MySQL:</strong> Open XAMPP Control Panel and click <strong>"Start"</strong> next to MySQL (port 3306).</li>
+  <li><strong>Open phpMyAdmin:</strong> Go to <code>http://localhost/phpmyadmin</code> in your web browser.</li>
+  <li><strong>Create Database:</strong> Click the <em>"Databases"</em> tab, enter database name <code>CollegeComplaint</code>, and click <em>"Create"</em>.</li>
+  <li><strong>Import SQL File:</strong> Select <code>CollegeComplaint</code> from the left menu &rarr; click the <em>"Import"</em> tab &rarr; choose <code>sql/CollegeComplaint.sql</code> &rarr; click <strong>"Import"</strong>.</li>
+</ol>
+<div class="tip">
+  <strong>Note:</strong> Java also features an automatic database seeder. If the database is newly created, it seeds 50+ sample complaints automatically on startup!
+</div>
+
+<h2>3. Running as Pure Java Desktop Application (GUI Mode)</h2>
+<p>This mode opens a 100% native Java desktop application (<code>JFrame</code>) with no browser involved.</p>
+
+<h3>Method 1: One-Click Desktop Launcher (Recommended)</h3>
+<p>In your project folder, double-click: <strong><code>Launch-CollegeComplaint.bat</code></strong> (or <code>run-desktop-java.bat</code>).</p>
+
+<h3>Method 2: From PowerShell</h3>
+<pre>
+cd "C:\Users\Hariprasad\Videos\JAVA PROJECT"
+.\run.ps1
+</pre>
+
+<h3>Method 3: Direct Java Command</h3>
+<pre>
+& "C:\Program Files\Java\jdk-27.0.1.0.3\bin\java.exe" -jar CollegeComplaint.jar
+</pre>
+
+<h2>4. Running in Terminal Console Mode (CLI / Viva Mode)</h2>
+<p>Use this mode when your teacher or lab examiner asks: <em>"Show me the Java console output in the terminal itself!"</em></p>
+
+<h3>Method 1: One-Click Terminal Launcher</h3>
+<p>In your project folder, double-click: <strong><code>Launch-Terminal-Console.bat</code></strong>.</p>
+
+<h3>Method 2: From PowerShell / Command Prompt</h3>
+<pre>
+cd "C:\Users\Hariprasad\Videos\JAVA PROJECT"
+.\run.ps1 --terminal
+</pre>
+
+<h3>Terminal Commands Available for Demonstration:</h3>
+<table>
+  <thead>
+    <tr>
+      <th style="width:15%">Command</th>
+      <th style="width:35%">Action</th>
+      <th style="width:50%">What is Displayed in Terminal</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>1</strong></td>
+      <td>View All Complaints Table</td>
+      <td>Formatted ASCII table of 50+ complaints with ID, Student, Department, Category, Status, and Date.</td>
+    </tr>
+    <tr>
+      <td><strong>2</strong></td>
+      <td>Filter by Status</td>
+      <td>Prompt accepts <code>P</code> (Pending), <code>I</code> (In Progress), or <code>R</code> (Resolved) and filters records via SQL query.</td>
+    </tr>
+    <tr>
+      <td><strong>3</strong></td>
+      <td>View Registered Students</td>
+      <td>ASCII table of registered students with ID, Name, Department, Email, and Phone number.</td>
+    </tr>
+    <tr>
+      <td><strong>4</strong></td>
+      <td>Submit Complaint via Terminal</td>
+      <td>Interactive input prompts for Student ID, Category, and Description. Executes SQL <code>INSERT</code> via <code>PreparedStatement</code>.</td>
+    </tr>
+    <tr>
+      <td><strong>5</strong></td>
+      <td>Update Status via Terminal</td>
+      <td>Prompts for Complaint ID, new status, and remarks. Executes SQL <code>UPDATE</code> in MySQL.</td>
+    </tr>
+    <tr>
+      <td><strong>6</strong></td>
+      <td>Database Metrics Overview</td>
+      <td>Prints live SQL <code>COUNT(*)</code> summary calculations.</td>
+    </tr>
+    <tr>
+      <td><strong>7</strong></td>
+      <td>Open Pure Java Swing Window</td>
+      <td>Launches the desktop GUI window directly from the console.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>5. Demo Credentials for Evaluation</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Role</th>
+      <th>Email</th>
+      <th>Password</th>
+      <th>Quick-Fill Button in GUI</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Student</strong></td>
+      <td><code>abhinav@example.com</code></td>
+      <td><code>student@123</code></td>
+      <td>Click <em>"Student (Abhinav)"</em></td>
+    </tr>
+    <tr>
+      <td><strong>Admin / Warden</strong></td>
+      <td><code>warden@example.com</code></td>
+      <td><code>admin@123</code></td>
+      <td>Click <em>"Admin (Dr. Raman)"</em></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>6. Free Live Hosted Online Link (No Setup Required)</h2>
+<p>If you need to share the project with your teacher or open it on a mobile device/tablet, use the free cloud deployment:</p>
+<p>👉 <strong><a href="https://secureu.vercel.app">https://secureu.vercel.app</a></strong></p>
+
+</body>
+</html>

@@ -1979,3 +1979,394 @@ body {
   border-color: #0a0a0a;
 }
 
+/* ==========================================================================
+   HIGH-FIDELITY RESPONSIVE SYSTEM (All Devices: Mobile, Tablet, Laptops)
+   ========================================================================== */
+
+/* 1. Large Tablets & Small Laptops (<= 1024px) */
+@media (max-width: 1024px) {
+  #login-view.active {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .login-form-card {
+    padding: 2rem 2.5rem;
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.25rem !important;
+  }
+
+  .kpi-grid,
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 0.85rem !important;
+  }
+
+  .table-toolbar {
+    flex-wrap: wrap;
+    gap: 0.85rem;
+  }
+}
+
+/* 2. Tablets & Mobile Portrait (<= 900px) */
+@media (max-width: 900px) {
+  #login-view.active {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    min-height: 100vh !important;
+    height: auto !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+
+  .login-wrapper-modern {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+
+  .login-hero-card {
+    position: relative !important;
+    width: 100% !important;
+    height: 320px !important;
+    min-height: 320px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .hero-top-badge {
+    top: 1.25rem !important;
+    left: 1.25rem !important;
+  }
+
+  .hero-overlay-text {
+    padding: 1.5rem !important;
+  }
+
+  .hero-overlay-text h2 {
+    font-size: 1.85rem !important;
+  }
+
+  .login-form-card {
+    position: relative !important;
+    height: auto !important;
+    min-height: auto !important;
+    width: 100% !important;
+    padding: 2.25rem 1.75rem 3.5rem !important;
+    overflow-y: visible !important;
+  }
+
+  .login-form-inner {
+    max-width: 460px !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+  }
+
+  .login-floating-db-btn {
+    top: 1rem !important;
+    right: 1.25rem !important;
+  }
+
+  .admin-header-box {
+    padding: 1.25rem 1rem !important;
+  }
+
+  .admin-top-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+  }
+
+  .admin-top-left {
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+    width: 100% !important;
+  }
+
+  .admin-top-left h2 {
+    font-size: 1.35rem !important;
+    width: 100% !important;
+    margin-bottom: 0.2rem !important;
+  }
+
+  .admin-top-left .btn {
+    flex: 1 1 calc(50% - 0.25rem) !important;
+    justify-content: center !important;
+    min-height: 42px !important;
+  }
+
+  .table-toolbar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+    padding: 0.85rem 1rem !important;
+  }
+
+  .table-toolbar-left {
+    flex-wrap: wrap !important;
+    width: 100% !important;
+    gap: 0.5rem !important;
+  }
+
+  .toolbar-select {
+    flex: 1 1 calc(50% - 0.25rem) !important;
+    width: auto !important;
+  }
+
+  .search-input-group {
+    width: 100% !important;
+    min-width: 100% !important;
+  }
+}
+
+/* 3. Small Tablets & Phones (<= 680px) */
+@media (max-width: 680px) {
+  .navbar {
+    padding: 0.65rem 0.85rem !important;
+  }
+
+  .brand-info h1 {
+    font-size: 1.15rem !important;
+  }
+
+  .brand-info span {
+    display: none !important;
+  }
+
+  .nav-actions {
+    gap: 0.35rem !important;
+  }
+
+  .user-details {
+    display: none !important;
+  }
+
+  .user-badge {
+    padding: 0.25rem 0.45rem !important;
+  }
+
+  .user-avatar {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 0.82rem !important;
+  }
+
+  #nav-db-btn,
+  #nav-logout-btn {
+    padding: 0.38rem 0.65rem !important;
+    font-size: 0.76rem !important;
+  }
+
+  .kpi-grid,
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.6rem !important;
+  }
+
+  .kpi-card,
+  .stat-card {
+    padding: 0.85rem 0.95rem !important;
+  }
+
+  .kpi-value,
+  .stat-value {
+    font-size: 1.45rem !important;
+  }
+
+  .kpi-spark {
+    display: none !important;
+  }
+
+  .donut-wrap {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    gap: 1.25rem !important;
+  }
+
+  .donut-body {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    max-width: 220px !important;
+  }
+
+  .donut-legend {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.65rem !important;
+    text-align: left !important;
+  }
+
+  .table-wrapper {
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .custom-table {
+    min-width: 640px !important;
+  }
+
+  .custom-table th,
+  .custom-table td {
+    padding: 0.75rem 0.85rem !important;
+    font-size: 0.82rem !important;
+  }
+
+  .table-footer {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    padding: 1rem !important;
+  }
+
+  /* Modals on Mobile (App-style bottom sheet) */
+  .modal-overlay {
+    padding: 0 !important;
+    align-items: flex-end !important;
+  }
+
+  .modal-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 88vh !important;
+    border-radius: 20px 20px 0 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+
+  .modal-header {
+    padding: 1rem 1.15rem !important;
+    flex-shrink: 0 !important;
+  }
+
+  .modal-header h3 {
+    font-size: 1.05rem !important;
+  }
+
+  .modal-body {
+    padding: 1.15rem !important;
+    overflow-y: auto !important;
+    flex: 1 1 auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .modal-footer {
+    padding: 0.85rem 1.15rem !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    flex-shrink: 0 !important;
+    background: #ffffff !important;
+    border-top: 1px solid #f1f5f9 !important;
+  }
+
+  .modal-footer .btn {
+    width: 100% !important;
+    min-height: 44px !important;
+    justify-content: center !important;
+  }
+
+  .submission-preview-card {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.75rem !important;
+  }
+
+  .submission-preview-left {
+    width: 100% !important;
+  }
+
+  .submission-meta-name {
+    max-width: 100% !important;
+  }
+
+  .attachment-img-preview {
+    max-height: 48vh !important;
+    width: 100% !important;
+  }
+
+  .demo-accounts-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.45rem !important;
+  }
+}
+
+/* 4. Extra Small Phones (<= 440px) */
+@media (max-width: 440px) {
+  .login-hero-card {
+    height: 230px !important;
+    min-height: 230px !important;
+  }
+
+  .hero-overlay-text {
+    padding: 1rem !important;
+  }
+
+  .hero-overlay-text h2 {
+    font-size: 1.45rem !important;
+  }
+
+  .hero-brand-pill {
+    font-size: 0.76rem !important;
+    padding: 0.32rem 0.65rem !important;
+  }
+
+  .hero-tagline {
+    display: none !important;
+  }
+
+  .login-form-card {
+    padding: 1.75rem 1.15rem 2.5rem !important;
+  }
+
+  .login-main-title {
+    font-size: 1.45rem !important;
+  }
+
+  .login-sub-title {
+    font-size: 0.8rem !important;
+  }
+
+  .admin-top-left .btn {
+    flex: 1 1 100% !important;
+  }
+
+  .kpi-grid,
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .toolbar-select {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+  }
+
+  .form-row {
+    flex-direction: column !important;
+  }
+}
+
+/* 5. Touch Optimizations for All Touchscreens */
+@media (hover: none) and (pointer: coarse) {
+  .btn,
+  .tab-btn,
+  .role-tab-btn,
+  .page-btn,
+  .table-evidence-btn,
+  .btn-view-attachment {
+    min-height: 40px;
+  }
+
+  .form-control,
+  .form-select,
+  .modern-input {
+    font-size: 16px !important; /* Prevents auto-zoom on iOS */
+  }
+}
+
+

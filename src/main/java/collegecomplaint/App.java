@@ -121,6 +121,8 @@ public class App {
             HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
             server.createContext("/api/status", new StatusHandler());
             server.createContext("/api/login", new LoginHandler());
+            server.createContext("/api/register", new RegisterHandler());
+            server.createContext("/api/users", new UsersHandler());
             server.createContext("/api/complaints", new ComplaintsHandler());
             server.createContext("/api/update", new UpdateHandler());
             server.createContext("/api/db", new DatabaseHandler());
@@ -311,22 +313,22 @@ public class App {
     // =========================================================================
 
     public static class LoginWindow extends JFrame {
-        private final JComboBox<String> roleCombo = new JComboBox<>(new String[]{"Student", "Administrator / Warden"});
-        private final JTextField emailField = new JTextField("abhinav@example.com", 22);
-        private final JPasswordField passwordField = new JPasswordField("student@123", 22);
-        private final JLabel statusLabel = new JLabel(" ");
+        final JComboBox<String> roleCombo = new JComboBox<>(new String[]{"Student", "Administrator / Warden"});
+        final JTextField emailField = new JTextField("abhinav@example.com", 22);
+        final JPasswordField passwordField = new JPasswordField("student@123", 22);
+        final JLabel statusLabel = new JLabel(" ");
 
         public LoginWindow() {
             setTitle("SecureU — Pure Java Desktop Portal");
             setDefaultCloseOperation(EXIT_ON_CLOSE);
-            setSize(540, 520);
+            setSize(560, 600);
             setLocationRelativeTo(null);
             setResizable(false);
             getContentPane().setBackground(COLOR_BG);
 
-            JPanel root = new JPanel(new BorderLayout(0, 16));
+            JPanel root = new JPanel(new BorderLayout(0, 14));
             root.setBackground(COLOR_BG);
-            root.setBorder(new EmptyBorder(28, 36, 28, 36));
+            root.setBorder(new EmptyBorder(22, 32, 22, 32));
 
             // Header Banner
             JPanel header = new JPanel(new GridLayout(2, 1, 4, 4));
@@ -347,7 +349,7 @@ public class App {
             // Login Card Form
             JPanel card = cardPanel(new GridBagLayout());
             GridBagConstraints g = new GridBagConstraints();
-            g.insets = new Insets(6, 6, 6, 6);
+            g.insets = new Insets(5, 6, 5, 6);
             g.fill = GridBagConstraints.HORIZONTAL;
             g.weightx = 1.0;
 
@@ -363,7 +365,7 @@ public class App {
 
             // Email
             g.gridy = 2;
-            JLabel lblEmail = new JLabel("Institutional Email");
+            JLabel lblEmail = new JLabel("Institutional Email / Username");
             lblEmail.setFont(new Font("Segoe UI", Font.BOLD, 12));
             card.add(lblEmail, g);
 
@@ -383,13 +385,29 @@ public class App {
 
             // Submit Button
             g.gridy = 6;
-            g.insets = new Insets(12, 6, 4, 6);
+            g.insets = new Insets(10, 6, 4, 6);
             JButton btnLogin = primaryButton("Sign In to Portal");
             card.add(btnLogin, g);
 
-            // Status Notice
+            // Action Buttons Row: Register & Users Directory
             g.gridy = 7;
-            g.insets = new Insets(2, 6, 6, 6);
+            g.insets = new Insets(4, 6, 4, 6);
+            JPanel actionRow = new JPanel(new GridLayout(1, 2, 8, 0));
+            actionRow.setBackground(COLOR_CARD_BG);
+
+            JButton btnRegister = secondaryButton("➕ Register as Student");
+            JButton btnDirectory = secondaryButton("👥 Users Directory");
+
+            btnRegister.addActionListener(e -> new StudentRegistrationDialog(this).setVisible(true));
+            btnDirectory.addActionListener(e -> new UsersDirectoryDialog(this).setVisible(true));
+
+            actionRow.add(btnRegister);
+            actionRow.add(btnDirectory);
+            card.add(actionRow, g);
+
+            // Status Notice
+            g.gridy = 8;
+            g.insets = new Insets(2, 6, 4, 6);
             statusLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
             statusLabel.setHorizontalAlignment(JLabel.CENTER);
             card.add(statusLabel, g);
@@ -446,6 +464,333 @@ public class App {
                     }
                 }
             });
+        }
+
+        // =========================================================================
+        // STUDENT REGISTRATION DIALOG (Pure Java Swing Modal Popup)
+        // =========================================================================
+        public static class StudentRegistrationDialog extends JDialog {
+            private final JTextField nameField = new JTextField(20);
+            private final JComboBox<String> deptCombo = new JComboBox<>(new String[]{
+                    "CSE", "ECE", "MECH", "CIVIL", "EEE", "IT", "AI & DS", "Chemical", "Other"
+            });
+            private final JTextField regEmailField = new JTextField(20);
+            private final JPasswordField passField = new JPasswordField(20);
+            private final JPasswordField confirmPassField = new JPasswordField(20);
+            private final JTextField phoneField = new JTextField(20);
+            private final JLabel errLabel = new JLabel(" ");
+            private final LoginWindow parentLogin;
+
+            public StudentRegistrationDialog(LoginWindow parent) {
+                super(parent, "New Student Registration — SecureU", true);
+                this.parentLogin = parent;
+                setSize(490, 560);
+                setLocationRelativeTo(parent);
+                setResizable(false);
+                getContentPane().setBackground(COLOR_BG);
+
+                JPanel root = new JPanel(new BorderLayout(0, 12));
+                root.setBackground(COLOR_BG);
+                root.setBorder(new EmptyBorder(18, 24, 18, 24));
+
+                // Header
+                JPanel header = new JPanel(new GridLayout(2, 1, 2, 2));
+                header.setBackground(COLOR_BG);
+                JLabel title = new JLabel("Create Student Account");
+                title.setFont(new Font("Segoe UI", Font.BOLD, 20));
+                title.setForeground(COLOR_PRIMARY);
+                JLabel sub = new JLabel("Register new student profile in MySQL database");
+                sub.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+                sub.setForeground(COLOR_TEXT_MUTED);
+                header.add(title);
+                header.add(sub);
+                root.add(header, BorderLayout.NORTH);
+
+                // Form card
+                JPanel card = cardPanel(new GridBagLayout());
+                GridBagConstraints g = new GridBagConstraints();
+                g.insets = new Insets(4, 5, 4, 5);
+                g.fill = GridBagConstraints.HORIZONTAL;
+                g.weightx = 1.0;
+
+                g.gridx = 0; g.gridy = 0;
+                JLabel lblName = new JLabel("Full Name *");
+                lblName.setFont(new Font("Segoe UI", Font.BOLD, 12));
+                card.add(lblName, g);
+                g.gridy = 1;
+                nameField.setPreferredSize(new Dimension(100, 32));
+                card.add(nameField, g);
+
+                g.gridy = 2;
+                JLabel lblDept = new JLabel("Department *");
+                lblDept.setFont(new Font("Segoe UI", Font.BOLD, 12));
+                card.add(lblDept, g);
+                g.gridy = 3;
+                deptCombo.setPreferredSize(new Dimension(100, 32));
+                card.add(deptCombo, g);
+
+                g.gridy = 4;
+                JLabel lblEmail = new JLabel("Email Address / Username *");
+                lblEmail.setFont(new Font("Segoe UI", Font.BOLD, 12));
+                card.add(lblEmail, g);
+                g.gridy = 5;
+                regEmailField.setPreferredSize(new Dimension(100, 32));
+                card.add(regEmailField, g);
+
+                g.gridy = 6;
+                JLabel lblPhone = new JLabel("Phone Number (Optional)");
+                lblPhone.setFont(new Font("Segoe UI", Font.BOLD, 12));
+                card.add(lblPhone, g);
+                g.gridy = 7;
+                phoneField.setPreferredSize(new Dimension(100, 32));
+                card.add(phoneField, g);
+
+                g.gridy = 8;
+                JLabel lblPass = new JLabel("Password *");
+                lblPass.setFont(new Font("Segoe UI", Font.BOLD, 12));
+                card.add(lblPass, g);
+                g.gridy = 9;
+                passField.setPreferredSize(new Dimension(100, 32));
+                card.add(passField, g);
+
+                g.gridy = 10;
+                JLabel lblConfirm = new JLabel("Confirm Password *");
+                lblConfirm.setFont(new Font("Segoe UI", Font.BOLD, 12));
+                card.add(lblConfirm, g);
+                g.gridy = 11;
+                confirmPassField.setPreferredSize(new Dimension(100, 32));
+                card.add(confirmPassField, g);
+
+                g.gridy = 12;
+                errLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+                errLabel.setForeground(Color.RED);
+                errLabel.setHorizontalAlignment(JLabel.CENTER);
+                card.add(errLabel, g);
+
+                root.add(card, BorderLayout.CENTER);
+
+                // Buttons
+                JPanel btnRow = new JPanel(new GridLayout(1, 2, 10, 0));
+                btnRow.setBackground(COLOR_BG);
+                JButton btnCancel = secondaryButton("Cancel");
+                JButton btnSubmit = primaryButton("Register Account");
+
+                btnCancel.addActionListener(e -> dispose());
+                btnSubmit.addActionListener(e -> doRegister());
+
+                btnRow.add(btnCancel);
+                btnRow.add(btnSubmit);
+                root.add(btnRow, BorderLayout.SOUTH);
+
+                getRootPane().setDefaultButton(btnSubmit);
+                add(root);
+            }
+
+            private void doRegister() {
+                String name = nameField.getText().trim();
+                String dept = (String) deptCombo.getSelectedItem();
+                String email = regEmailField.getText().trim().toLowerCase();
+                String pass = new String(passField.getPassword());
+                String confirmPass = new String(confirmPassField.getPassword());
+                String phone = phoneField.getText().trim();
+
+                if (name.isEmpty()) {
+                    errLabel.setText("Please enter student name.");
+                    return;
+                }
+                if (email.isEmpty() || !email.contains("@") || !email.contains(".")) {
+                    errLabel.setText("Please enter a valid email address.");
+                    return;
+                }
+                if (pass.isEmpty() || pass.length() < 4) {
+                    errLabel.setText("Password must be at least 4 characters.");
+                    return;
+                }
+                if (!pass.equals(confirmPass)) {
+                    errLabel.setText("Passwords do not match.");
+                    return;
+                }
+
+                try (Connection c = connect()) {
+                    // Check duplicate
+                    String checkSql = "SELECT student_id FROM students WHERE email=? UNION SELECT admin_id FROM admin WHERE email=?";
+                    try (PreparedStatement checkStmt = c.prepareStatement(checkSql)) {
+                        checkStmt.setString(1, email);
+                        checkStmt.setString(2, email);
+                        try (ResultSet r = checkStmt.executeQuery()) {
+                            if (r.next()) {
+                                errLabel.setText("An account with this email already exists.");
+                                return;
+                            }
+                        }
+                    }
+
+                    // Insert into students table
+                    String insertSql = "INSERT INTO students (name, department, email, password, phone) VALUES (?, ?, ?, ?, ?)";
+                    try (PreparedStatement ps = c.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+                        ps.setString(1, name);
+                        ps.setString(2, dept);
+                        ps.setString(3, email);
+                        ps.setString(4, pass);
+                        ps.setString(5, phone.isEmpty() ? null : phone);
+                        ps.executeUpdate();
+
+                        int newId = -1;
+                        try (ResultSet k = ps.getGeneratedKeys()) {
+                            if (k.next()) newId = k.getInt(1);
+                        }
+
+                        log("JDBC REGISTER", "New student registered: " + name + " (ID #" + newId + ", " + dept + ", " + email + ")");
+
+                        JOptionPane.showMessageDialog(this,
+                                "Student account registered successfully in MySQL!\n" +
+                                "Student ID: #" + newId + "\n" +
+                                "Name: " + name + "\n" +
+                                "Email: " + email + "\n\n" +
+                                "You can now sign in with your credentials.",
+                                "Registration Successful", JOptionPane.INFORMATION_MESSAGE);
+
+                        // Auto-fill into parent LoginWindow
+                        parentLogin.roleCombo.setSelectedIndex(0); // Student
+                        parentLogin.emailField.setText(email);
+                        parentLogin.passwordField.setText(pass);
+                        parentLogin.statusLabel.setText("Account created! Click 'Sign In' to enter portal.");
+                        parentLogin.statusLabel.setForeground(new Color(21, 128, 61));
+
+                        dispose();
+                    }
+                } catch (SQLException ex) {
+                    errLabel.setText("Database Error: " + ex.getMessage());
+                    log("JDBC REGISTER ERROR", ex.getMessage());
+                }
+            }
+        }
+
+        // =========================================================================
+        // USERS DIRECTORY DIALOG (Students & Admins List Modal)
+        // =========================================================================
+        public static class UsersDirectoryDialog extends JDialog {
+            private final JTable studentsTable = new JTable();
+            private final JTable adminTable = new JTable();
+            private final LoginWindow parentLogin;
+            private final JTabbedPane tabs = new JTabbedPane();
+
+            public UsersDirectoryDialog(LoginWindow parent) {
+                super(parent, "Registered Users Directory — SecureU", true);
+                this.parentLogin = parent;
+                setSize(820, 560);
+                setLocationRelativeTo(parent);
+                getContentPane().setBackground(COLOR_BG);
+
+                JPanel root = new JPanel(new BorderLayout(0, 14));
+                root.setBackground(COLOR_BG);
+                root.setBorder(new EmptyBorder(18, 22, 18, 22));
+
+                // Header
+                JPanel header = new JPanel(new BorderLayout());
+                header.setBackground(COLOR_BG);
+
+                JPanel titlePanel = new JPanel(new GridLayout(2, 1, 2, 2));
+                titlePanel.setBackground(COLOR_BG);
+
+                JLabel title = new JLabel("Database Users Directory (Students & Admins)");
+                title.setFont(new Font("Segoe UI", Font.BOLD, 19));
+                title.setForeground(COLOR_PRIMARY);
+
+                JLabel subtitle = new JLabel("Click any user in the table below to automatically load credentials for login.");
+                subtitle.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+                subtitle.setForeground(COLOR_TEXT_MUTED);
+
+                titlePanel.add(title);
+                titlePanel.add(subtitle);
+                header.add(titlePanel, BorderLayout.WEST);
+
+                JButton btnRefresh = secondaryButton("Refresh Users");
+                btnRefresh.addActionListener(e -> loadUsers());
+                header.add(btnRefresh, BorderLayout.EAST);
+                root.add(header, BorderLayout.NORTH);
+
+                // Tabbed Pane
+                tabs.setFont(new Font("Segoe UI", Font.BOLD, 12));
+                styleTable(studentsTable);
+                styleTable(adminTable);
+
+                tabs.addTab("  Registered Students (students table)  ", new JScrollPane(studentsTable));
+                tabs.addTab("  Administrators & Wardens (admin table)  ", new JScrollPane(adminTable));
+
+                root.add(tabs, BorderLayout.CENTER);
+
+                // Footer action bar
+                JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 6));
+                footer.setBackground(COLOR_BG);
+
+                JButton btnClose = secondaryButton("Close");
+                btnClose.addActionListener(e -> dispose());
+
+                JButton btnUse = primaryButton("Auto-Fill Selected User into Login");
+                btnUse.addActionListener(e -> selectAndFillUser());
+
+                footer.add(btnClose);
+                footer.add(btnUse);
+                root.add(footer, BorderLayout.SOUTH);
+
+                // Double click row to auto-fill
+                studentsTable.addMouseListener(new java.awt.event.MouseAdapter() {
+                    public void mouseClicked(java.awt.event.MouseEvent e) {
+                        if (e.getClickCount() == 2) selectAndFillUser();
+                    }
+                });
+                adminTable.addMouseListener(new java.awt.event.MouseAdapter() {
+                    public void mouseClicked(java.awt.event.MouseEvent e) {
+                        if (e.getClickCount() == 2) selectAndFillUser();
+                    }
+                });
+
+                add(root);
+                loadUsers();
+            }
+
+            private void selectAndFillUser() {
+                int currentTab = tabs.getSelectedIndex();
+                JTable targetTable = (currentTab == 0) ? studentsTable : adminTable;
+                int sel = targetTable.getSelectedRow();
+                if (sel < 0) {
+                    JOptionPane.showMessageDialog(this, "Please select a user from the table first.", "Select User", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                int modelRow = targetTable.convertRowIndexToModel(sel);
+                String email = targetTable.getModel().getValueAt(modelRow, 3).toString();
+                String name = targetTable.getModel().getValueAt(modelRow, 1).toString();
+                String pass = targetTable.getModel().getValueAt(modelRow, 4).toString();
+
+                parentLogin.roleCombo.setSelectedIndex(currentTab);
+                parentLogin.emailField.setText(email);
+                parentLogin.passwordField.setText(pass);
+                parentLogin.statusLabel.setText("Selected " + (currentTab == 0 ? "Student " : "Admin ") + name + " (" + email + ")");
+                parentLogin.statusLabel.setForeground(COLOR_PRIMARY);
+
+                dispose();
+            }
+
+            private void loadUsers() {
+                try (Connection c = connect()) {
+                    // Students table
+                    String sqlStudents = "SELECT student_id AS ID, name AS Name, department AS Dept, email AS Email, password AS Password, phone AS Phone FROM students ORDER BY student_id ASC";
+                    try (Statement st = c.createStatement(); ResultSet rs = st.executeQuery(sqlStudents)) {
+                        studentsTable.setModel(buildTableModel(rs));
+                        styleTable(studentsTable);
+                    }
+
+                    // Admin table
+                    String sqlAdmin = "SELECT admin_id AS ID, name AS Name, role AS Role, email AS Email, password AS Password FROM admin ORDER BY admin_id ASC";
+                    try (Statement st = c.createStatement(); ResultSet rs = st.executeQuery(sqlAdmin)) {
+                        adminTable.setModel(buildTableModel(rs));
+                        styleTable(adminTable);
+                    }
+                } catch (SQLException ex) {
+                    log("LOAD USERS ERROR", ex.getMessage());
+                }
+            }
         }
 
         private void performLogin() {
@@ -1476,6 +1821,103 @@ public class App {
         }
     }
 
+    static class RegisterHandler implements HttpHandler {
+        public void handle(HttpExchange ex) throws IOException {
+            if (!"POST".equalsIgnoreCase(ex.getRequestMethod())) {
+                sendJsonResponse(ex, 405, "{\"error\":\"Method Not Allowed\"}");
+                return;
+            }
+
+            String body = readBody(ex);
+            Map<String, String> p = parseJsonSimple(body);
+            String name = p.getOrDefault("name", "").trim();
+            String dept = p.getOrDefault("department", "CSE").trim();
+            String email = p.getOrDefault("email", "").trim().toLowerCase();
+            String password = p.getOrDefault("password", "").trim();
+            String phone = p.getOrDefault("phone", "").trim();
+
+            if (name.isEmpty() || email.isEmpty() || password.isEmpty()) {
+                sendJsonResponse(ex, 400, "{\"success\":false,\"error\":\"Name, email, and password are required.\"}");
+                return;
+            }
+
+            try (Connection c = connect()) {
+                // Check duplicate
+                String checkSql = "SELECT student_id FROM students WHERE email=? UNION SELECT admin_id FROM admin WHERE email=?";
+                try (PreparedStatement checkStmt = c.prepareStatement(checkSql)) {
+                    checkStmt.setString(1, email);
+                    checkStmt.setString(2, email);
+                    try (ResultSet r = checkStmt.executeQuery()) {
+                        if (r.next()) {
+                            sendJsonResponse(ex, 400, "{\"success\":false,\"error\":\"An account with this email already exists.\"}");
+                            return;
+                        }
+                    }
+                }
+
+                String insertSql = "INSERT INTO students (name, department, email, password, phone) VALUES (?, ?, ?, ?, ?)";
+                try (PreparedStatement ps = c.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+                    ps.setString(1, name);
+                    ps.setString(2, dept);
+                    ps.setString(3, email);
+                    ps.setString(4, password);
+                    ps.setString(5, phone.isEmpty() ? null : phone);
+                    ps.executeUpdate();
+
+                    int newId = -1;
+                    try (ResultSet k = ps.getGeneratedKeys()) {
+                        if (k.next()) newId = k.getInt(1);
+                    }
+
+                    log("JDBC REGISTER", "Web API student registered: " + name + " (ID #" + newId + ", " + email + ")");
+                    sendJsonResponse(ex, 200, "{\"success\":true,\"student_id\":" + newId + ",\"name\":\"" + escape(name) + "\",\"message\":\"Registration successful\"}");
+                }
+            } catch (SQLException e) {
+                log("JDBC REGISTER ERROR", e.getMessage());
+                sendJsonResponse(ex, 500, "{\"success\":false,\"error\":\"" + escape(e.getMessage()) + "\"}");
+            }
+        }
+    }
+
+    static class UsersHandler implements HttpHandler {
+        public void handle(HttpExchange ex) throws IOException {
+            try (Connection c = connect()) {
+                String studentsJson = queryToJson(c, "SELECT student_id, name, department, email, phone FROM students ORDER BY student_id ASC");
+                String adminJson = queryToJson(c, "SELECT admin_id, name, role, email FROM admin ORDER BY admin_id ASC");
+                String full = String.format("{\"students\":%s,\"admin\":%s}", studentsJson, adminJson);
+                sendJsonResponse(ex, 200, full);
+            } catch (SQLException e) {
+                sendJsonResponse(ex, 500, "{\"error\":\"" + escape(e.getMessage()) + "\"}");
+            }
+        }
+    }
+
+    public static String queryToJson(Connection c, String sql) throws SQLException {
+        try (PreparedStatement s = c.prepareStatement(sql); ResultSet r = s.executeQuery()) {
+            ResultSetMetaData md = r.getMetaData();
+            int count = md.getColumnCount();
+            StringBuilder sb = new StringBuilder("[");
+            boolean first = true;
+            while (r.next()) {
+                if (!first) sb.append(",");
+                first = false;
+                sb.append("{");
+                for (int i = 1; i <= count; i++) {
+                    if (i > 1) sb.append(",");
+                    String col = md.getColumnLabel(i);
+                    Object val = r.getObject(i);
+                    sb.append("\"").append(col).append("\":");
+                    if (val == null) sb.append("null");
+                    else if (val instanceof Number || val instanceof Boolean) sb.append(val);
+                    else sb.append("\"").append(escape(val.toString())).append("\"");
+                }
+                sb.append("}");
+            }
+            sb.append("]");
+            return sb.toString();
+        }
+    }
+
     static class DatabaseHandler implements HttpHandler {
         public void handle(HttpExchange ex) throws IOException {
             try (Connection c = connect()) {
@@ -1487,32 +1929,6 @@ public class App {
                 sendJsonResponse(ex, 200, full);
             } catch (SQLException e) {
                 sendJsonResponse(ex, 500, "{\"error\":\"" + escape(e.getMessage()) + "\"}");
-            }
-        }
-
-        private String queryToJson(Connection c, String sql) throws SQLException {
-            try (PreparedStatement s = c.prepareStatement(sql); ResultSet r = s.executeQuery()) {
-                ResultSetMetaData md = r.getMetaData();
-                int count = md.getColumnCount();
-                StringBuilder sb = new StringBuilder("[");
-                boolean first = true;
-                while (r.next()) {
-                    if (!first) sb.append(",");
-                    first = false;
-                    sb.append("{");
-                    for (int i = 1; i <= count; i++) {
-                        if (i > 1) sb.append(",");
-                        String col = md.getColumnLabel(i);
-                        Object val = r.getObject(i);
-                        sb.append("\"").append(col).append("\":");
-                        if (val == null) sb.append("null");
-                        else if (val instanceof Number || val instanceof Boolean) sb.append(val);
-                        else sb.append("\"").append(escape(val.toString())).append("\"");
-                    }
-                    sb.append("}");
-                }
-                sb.append("]");
-                return sb.toString();
             }
         }
     }

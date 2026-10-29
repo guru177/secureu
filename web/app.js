@@ -234,7 +234,246 @@ function initLogin() {
     applyLoginState();
     showToast("Signed out successfully.", "info");
   });
+
+  // Wire up registration & directory modal trigger buttons on Login screen
+  const btnOpenReg = document.getElementById("btn-open-student-reg");
+  if (btnOpenReg) {
+    btnOpenReg.addEventListener("click", () => {
+      document.getElementById("student-registration-form")?.reset();
+      const errBox = document.getElementById("reg-error-msg");
+      if (errBox) { errBox.style.display = "none"; errBox.textContent = ""; }
+      openModal("student-registration-modal");
+    });
+  }
+
+  const btnOpenDir = document.getElementById("btn-open-users-directory");
+  if (btnOpenDir) {
+    btnOpenDir.addEventListener("click", () => {
+      openUsersDirectory();
+    });
+  }
+
+  document.getElementById("dir-search-input")?.addEventListener("input", () => {
+    renderDirectoryTable();
+  });
+
+  // Registration Form Submission
+  const regForm = document.getElementById("student-registration-form");
+  if (regForm) {
+    regForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const errBox = document.getElementById("reg-error-msg");
+      if (errBox) errBox.style.display = "none";
+
+      const name = document.getElementById("reg-student-name").value.trim();
+      const department = document.getElementById("reg-student-dept").value;
+      const phone = document.getElementById("reg-student-phone").value.trim();
+      const email = document.getElementById("reg-student-email").value.trim();
+      const password = document.getElementById("reg-student-password").value;
+      const confirmPass = document.getElementById("reg-student-confirm").value;
+
+      if (!name || !email || !password) {
+        if (errBox) { errBox.textContent = "Please fill in all required fields."; errBox.style.display = "block"; }
+        return;
+      }
+
+      if (password !== confirmPass) {
+        if (errBox) { errBox.textContent = "Passwords do not match. Please re-enter."; errBox.style.display = "block"; }
+        return;
+      }
+
+      const submitBtn = document.getElementById("btn-submit-registration");
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Registering...";
+      }
+
+      try {
+        const res = await fetch("/api/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, department, phone, email, password })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          closeModal("student-registration-modal");
+          showToast(`Student ${name} registered successfully! Auto-filled credentials.`, "success");
+          autoFillUserLogin("student", email, password);
+          return;
+        } else {
+          if (errBox) { errBox.textContent = data.message || "Registration failed."; errBox.style.display = "block"; }
+        }
+      } catch (err) {
+        console.warn("Backend register API offline, saving locally:", err);
+        const existing = INITIAL_DATA.students.find(s => s.email.toLowerCase() === email.toLowerCase());
+        if (existing) {
+          if (errBox) { errBox.textContent = "A student with this email address already exists."; errBox.style.display = "block"; }
+        } else {
+          const newId = INITIAL_DATA.students.length ? Math.max(...INITIAL_DATA.students.map(s => s.student_id)) + 1 : 1;
+          const newStudent = { student_id: newId, name, department, email, password, phone };
+          INITIAL_DATA.students.push(newStudent);
+          closeModal("student-registration-modal");
+          showToast(`Student ${name} registered locally! Auto-filled credentials.`, "success");
+          autoFillUserLogin("student", email, password);
+        }
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `<span>Register &amp; Proceed to Login</span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>`;
+        }
+      }
+    });
+  }
 }
+
+// ==========================================================================
+// Users Directory Modal Logic
+// ==========================================================================
+let currentDirectoryTab = "students";
+let directoryDataCache = null;
+
+async function openUsersDirectory() {
+  openModal("users-directory-modal");
+  await fetchDirectoryUsers();
+  renderDirectoryTable();
+}
+
+async function fetchDirectoryUsers() {
+  try {
+    const res = await fetch("/api/users");
+    if (res.ok) {
+      const data = await res.json();
+      if (data.students && data.admin) {
+        directoryDataCache = data;
+        return;
+      }
+    }
+  } catch (err) {
+    console.warn("Failed to load /api/users, using local seed data", err);
+  }
+  directoryDataCache = {
+    students: INITIAL_DATA.students,
+    admin: INITIAL_DATA.admin
+  };
+}
+
+window.switchDirectoryTab = function(tab) {
+  currentDirectoryTab = tab;
+  const sBtn = document.getElementById("dir-tab-students-btn");
+  const aBtn = document.getElementById("dir-tab-admins-btn");
+  if (tab === "students") {
+    sBtn?.classList.remove("btn-outline");
+    sBtn?.classList.add("btn-primary");
+    aBtn?.classList.remove("btn-primary");
+    aBtn?.classList.add("btn-outline");
+  } else {
+    aBtn?.classList.remove("btn-outline");
+    aBtn?.classList.add("btn-primary");
+    sBtn?.classList.remove("btn-primary");
+    sBtn?.classList.add("btn-outline");
+  }
+  renderDirectoryTable();
+};
+
+function renderDirectoryTable() {
+  if (!directoryDataCache) return;
+  const studentsBadge = document.getElementById("dir-students-badge");
+  const adminsBadge = document.getElementById("dir-admins-badge");
+  if (studentsBadge) studentsBadge.textContent = directoryDataCache.students.length;
+  if (adminsBadge) adminsBadge.textContent = directoryDataCache.admin.length;
+
+  const searchInput = document.getElementById("dir-search-input");
+  const term = searchInput ? searchInput.value.toLowerCase().trim() : "";
+  const tbody = document.getElementById("dir-table-tbody");
+  if (!tbody) return;
+
+  if (currentDirectoryTab === "students") {
+    const filtered = directoryDataCache.students.filter(s =>
+      !term ||
+      (s.name && s.name.toLowerCase().includes(term)) ||
+      (s.email && s.email.toLowerCase().includes(term)) ||
+      (s.department && s.department.toLowerCase().includes(term))
+    );
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">No registered students match your search.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(s => `
+      <tr>
+        <td><strong>#${s.student_id}</strong></td>
+        <td>
+          <div style="font-weight: 600; color: var(--text-primary);">${escapeHtml(s.name)}</div>
+          <div style="font-size: 0.72rem; color: var(--text-muted);">${escapeHtml(s.phone || "No phone")}</div>
+        </td>
+        <td><span class="category-tag">${escapeHtml(s.department || "General")}</span></td>
+        <td><code style="color: #818cf8;">${escapeHtml(s.email)}</code></td>
+        <td><code style="background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px;">${escapeHtml(s.password)}</code></td>
+        <td style="text-align: center;">
+          <button type="button" class="btn btn-outline btn-sm" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; white-space: nowrap;"
+            onclick="autoFillUserLogin('student', '${escapeHtml(s.email)}', '${escapeHtml(s.password)}')">
+            ⚡ Auto-Fill
+          </button>
+        </td>
+      </tr>
+    `).join("");
+  } else {
+    const filtered = directoryDataCache.admin.filter(a =>
+      !term ||
+      (a.name && a.name.toLowerCase().includes(term)) ||
+      (a.email && a.email.toLowerCase().includes(term)) ||
+      (a.role && a.role.toLowerCase().includes(term))
+    );
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">No administrators match your search.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(a => `
+      <tr>
+        <td><strong>#${a.admin_id}</strong></td>
+        <td>
+          <div style="font-weight: 600; color: var(--text-primary);">${escapeHtml(a.name)}</div>
+          <div style="font-size: 0.72rem; color: #10b981;">Staff / Official</div>
+        </td>
+        <td><span class="badge ${a.role === 'Warden' ? 'badge-progress' : 'badge-resolved'}">${escapeHtml(a.role)}</span></td>
+        <td><code style="color: #34d399;">${escapeHtml(a.email)}</code></td>
+        <td><code style="background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px;">${escapeHtml(a.password)}</code></td>
+        <td style="text-align: center;">
+          <button type="button" class="btn btn-outline btn-sm" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; white-space: nowrap;"
+            onclick="autoFillUserLogin('admin', '${escapeHtml(a.email)}', '${escapeHtml(a.password)}')">
+            ⚡ Auto-Fill
+          </button>
+        </td>
+      </tr>
+    `).join("");
+  }
+}
+
+window.autoFillUserLogin = function(role, email, password) {
+  closeModal("users-directory-modal");
+  const roleStudentBtn = document.getElementById("role-student-btn");
+  const roleAdminBtn = document.getElementById("role-admin-btn");
+  const emailInput = document.getElementById("login-email");
+  const passwordInput = document.getElementById("login-password");
+
+  if (role === "student") {
+    roleStudentBtn?.click();
+  } else {
+    roleAdminBtn?.click();
+  }
+
+  if (emailInput) emailInput.value = email;
+  if (passwordInput) {
+    passwordInput.value = password;
+    passwordInput.focus();
+  }
+
+  showToast(`Auto-filled credentials for ${email} (${role.toUpperCase()})`, "info");
+};
 
 async function login(email, password, role) {
   try {

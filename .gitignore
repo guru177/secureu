@@ -12,3 +12,5 @@ err.log
 .idea/
 .DS_Store
 Thumbs.db
+*.lnk
+~$*
